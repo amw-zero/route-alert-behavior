@@ -3,7 +3,7 @@ open Expect;
 open Belt.List;
 open RouteAlertBehavior;
 
-let testInterpreter = behaviorInterpreter((api, respond) => {
+let testInterpreter = behaviorInterpreter((endpoint, respond) => {
   respond({ duration: 90 });
 });
 
