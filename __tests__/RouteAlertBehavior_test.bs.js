@@ -24,6 +24,14 @@ function reduceActions(actions) {
               }));
 }
 
+function canFetch(state) {
+  if (state) {
+    return false;
+  } else {
+    return true;
+  }
+}
+
 Jest.describe("Route Alert Behavior", (function (param) {
         Jest.test("preventing alert creation when all data is not present", (function (param) {
                 var finalState = reduceActions(/* :: */[
@@ -33,9 +41,7 @@ Jest.describe("Route Alert Behavior", (function (param) {
                         /* [] */0
                       ]
                     ]);
-                var match = finalState.routeFetchAbility;
-                var canFetch = match ? false : true;
-                return Jest.Expect.toBe(false, Jest.Expect.expect(canFetch));
+                return Jest.Expect.toBe(false, Jest.Expect.expect(finalState.routeFetchAbility ? false : true));
               }));
         Jest.test("preventing alert creation when all data is present", (function (param) {
                 var finalState = reduceActions(/* :: */[
@@ -48,9 +54,7 @@ Jest.describe("Route Alert Behavior", (function (param) {
                         ]
                       ]
                     ]);
-                var match = finalState.routeFetchAbility;
-                var canFetch = match ? false : true;
-                return Jest.Expect.toBe(true, Jest.Expect.expect(canFetch));
+                return Jest.Expect.toBe(true, Jest.Expect.expect(finalState.routeFetchAbility ? false : true));
               }));
         return Jest.test("calculating route duration", (function (param) {
                       var finalState = reduceActions(/* :: */[
@@ -74,4 +78,5 @@ Jest.describe("Route Alert Behavior", (function (param) {
 
 exports.testInterpreter = testInterpreter;
 exports.reduceActions = reduceActions;
+exports.canFetch = canFetch;
 /*  Not a pure module */

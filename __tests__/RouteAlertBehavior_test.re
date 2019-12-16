@@ -21,6 +21,13 @@ let reduceActions = (actions) => {
   );
 };
 
+let canFetch = state => {
+  switch (state) {
+    | CanFetch => true
+    | CannotFetch => false
+  };
+}
+
 describe("Route Alert Behavior", () => {
   test("preventing alert creation when all data is not present", () => {
     let finalState = reduceActions([
@@ -28,12 +35,7 @@ describe("Route Alert Behavior", () => {
       SetDestination("dest")
     ])
 
-    let canFetch = switch (finalState.routeFetchAbility) {
-      | CanFetch => true
-      | CannotFetch => false
-    };
-
-    expect(canFetch) |> toBe(false);
+    expect(canFetch(finalState.routeFetchAbility)) |> toBe(false);
   });
 
   test("preventing alert creation when all data is present", () => {
@@ -43,12 +45,7 @@ describe("Route Alert Behavior", () => {
       SetMinutes(5)
     ]);
 
-    let canFetch = switch(finalState.routeFetchAbility) {
-      | CanFetch => true
-      | CannotFetch => false
-    };
-
-    expect(canFetch) |> toBe(true);  
+    expect(canFetch(finalState.routeFetchAbility)) |> toBe(true);  
   });
 
   test("calculating route duration", () => {
