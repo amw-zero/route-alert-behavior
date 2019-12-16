@@ -74,15 +74,18 @@ function canFetch(state) {
 
 function parseRoute(routeResponse) {
   return {
-          duration: 5
+          duration: routeResponse.duration
         };
 }
 
 function behaviorInterpreter(networkRequest, effect, dispatch) {
   var actionCtor = effect[2];
   var api = directionsApi(effect[0], effect[1]);
-  return Curry._2(networkRequest, api, (function (response) {
-                return Curry._1(dispatch, Curry._1(actionCtor, 5));
+  var endpoint = /* CalculateRoute2 */[api];
+  return Curry._2(networkRequest, endpoint, (function (response) {
+                return Curry._1(dispatch, Curry._1(actionCtor, ({
+                                  duration: response.duration
+                                }).duration));
               }));
 }
 

@@ -3,11 +3,9 @@ open Expect;
 open Belt.List;
 open RouteAlertBehavior;
 
-let testInterpreter = (effect, dispatch) => {
-  switch (effect) {
-    | CalculateRoute(_, _, actionCtor) => dispatch(actionCtor(90))
-  };
-};
+let testInterpreter = behaviorInterpreter((api, respond) => {
+  respond({ duration: 90 });
+});
 
 let reduceActions = (actions) => {
   let state = ref(initialState);

@@ -7,8 +7,12 @@ var Curry = require("bs-platform/lib/js/curry.js");
 var Belt_List = require("bs-platform/lib/js/belt_List.js");
 var RouteAlertBehavior = require("../src/RouteAlertBehavior.bs.js");
 
-function testInterpreter(effect, dispatch) {
-  return Curry._1(dispatch, Curry._1(effect[2], 90));
+function testInterpreter(param, param$1) {
+  return RouteAlertBehavior.behaviorInterpreter((function (api, respond) {
+                return Curry._1(respond, {
+                            duration: 90
+                          });
+              }), param, param$1);
 }
 
 function reduceActions(actions) {

@@ -90,32 +90,36 @@ let canFetch = state =>
   | CannotFetch => false
   };
 
-type googleDuration = {value: int};
+// type googleDuration = {value: int};
 
-type googleLeg = {duration: googleDuration};
+// type googleLeg = {duration: googleDuration};
 
-type googleRoute = {legs: array(googleLeg)};
+// type googleRoute = {legs: array(googleLeg)};
 
-type googleDirections = {routes: array(googleRoute)};
+// type googleDirections = {routes: array(googleRoute)};
 
 type calculatedRoute = {
   duration: int
 };
+
+type endpoint =
+  | CalculateRoute2(string);
+
+let parseRoute = (routeResponse) => {
+  { duration: routeResponse.duration };
+}
 
 // Reffect model
 
 type effect('a) =
   | CalculateRoute(string, string, int => 'a);
 
-let parseRoute = (routeResponse) => {
-  { duration: 5 };
-}
-
 let behaviorInterpreter = (networkRequest, effect, dispatch) => {
   switch (effect) {
   | CalculateRoute(origin, destination, actionCtor) =>
     let api = directionsApi(origin, destination);
-    networkRequest(api, response => 
+    let endpoint: endpoint = CalculateRoute2(api);
+    networkRequest(endpoint, response => 
       parseRoute(response).duration |> actionCtor |> dispatch);
   };
 };
