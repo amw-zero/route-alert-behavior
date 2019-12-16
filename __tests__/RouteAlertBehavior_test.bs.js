@@ -2,14 +2,76 @@
 'use strict';
 
 var Jest = require("@glennsl/bs-jest/src/jest.js");
+var Block = require("bs-platform/lib/js/block.js");
+var Curry = require("bs-platform/lib/js/curry.js");
+var Belt_List = require("bs-platform/lib/js/belt_List.js");
+var RouteAlertBehavior$RouteAlertBehavior = require("../src/RouteAlertBehavior.bs.js");
 
-Jest.describe("Expect", (function (param) {
-        Jest.test("toBe", (function (param) {
-                return Jest.Expect.toBe(3, Jest.Expect.expect(3));
+function testInterpreter(effect, dispatch) {
+  return Curry._1(dispatch, Curry._1(effect[2], 90));
+}
+
+function reduceActions(actions) {
+  var state = {
+    contents: RouteAlertBehavior$RouteAlertBehavior.initialState
+  };
+  return Belt_List.reduce(actions, RouteAlertBehavior$RouteAlertBehavior.initialState, (function (param, action) {
+                RouteAlertBehavior$RouteAlertBehavior.Reffect.makeDispatch(state.contents, RouteAlertBehavior$RouteAlertBehavior.reducer, testInterpreter, (function (s) {
+                          state.contents = s;
+                          return /* () */0;
+                        }))(action);
+                return state.contents;
               }));
-        return Jest.test("toBe2", (function (param) {
-                      return Jest.Expect.toBe(5, Jest.Expect.expect(5));
+}
+
+Jest.describe("Route Alert Behavior", (function (param) {
+        Jest.test("preventing alert creation when all data is not present", (function (param) {
+                var finalState = reduceActions(/* :: */[
+                      /* SetOrigin */Block.__(0, ["origin"]),
+                      /* :: */[
+                        /* SetDestination */Block.__(1, ["dest"]),
+                        /* [] */0
+                      ]
+                    ]);
+                var match = finalState.routeFetchAbility;
+                var canFetch = match ? false : true;
+                return Jest.Expect.toBe(false, Jest.Expect.expect(canFetch));
+              }));
+        Jest.test("preventing alert creation when all data is present", (function (param) {
+                var finalState = reduceActions(/* :: */[
+                      /* SetOrigin */Block.__(0, ["origin"]),
+                      /* :: */[
+                        /* SetDestination */Block.__(1, ["dest"]),
+                        /* :: */[
+                          /* SetMinutes */Block.__(2, [5]),
+                          /* [] */0
+                        ]
+                      ]
+                    ]);
+                var match = finalState.routeFetchAbility;
+                var canFetch = match ? false : true;
+                return Jest.Expect.toBe(true, Jest.Expect.expect(canFetch));
+              }));
+        return Jest.test("calculating route duration", (function (param) {
+                      var finalState = reduceActions(/* :: */[
+                            /* SetOrigin */Block.__(0, ["origin"]),
+                            /* :: */[
+                              /* SetDestination */Block.__(1, ["dest"]),
+                              /* :: */[
+                                /* SetMinutes */Block.__(2, [5]),
+                                /* :: */[
+                                  /* FetchRoute */0,
+                                  /* [] */0
+                                ]
+                              ]
+                            ]
+                          ]);
+                      var match = finalState.routeDuration;
+                      var passed = match !== undefined ? match === 90 : false;
+                      return Jest.Expect.toBe(true, Jest.Expect.expect(passed));
                     }));
       }));
 
+exports.testInterpreter = testInterpreter;
+exports.reduceActions = reduceActions;
 /*  Not a pure module */
