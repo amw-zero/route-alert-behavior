@@ -117,6 +117,8 @@ type effect('a) =
 let behaviorInterpreter = (networkRequest, effect, dispatch) => {
   switch (effect) {
   | CalculateRoute(origin, destination, actionCtor) =>
+
+    // I don't feel that this provides a way to know that the endpoint URL is formed correctly
     let api = directionsApi(origin, destination);
     let endpoint: endpoint = CalculateRoute2(api);
     networkRequest(endpoint, response => 
