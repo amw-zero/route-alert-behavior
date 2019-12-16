@@ -59,18 +59,6 @@ function applyFetchAbility(stateEffect) {
         ];
 }
 
-function displayString(ostr) {
-  return Belt_Option.mapWithDefault(ostr, "nada", (function (s) {
-                return s;
-              }));
-}
-
-function displayInt(i) {
-  return Belt_Option.mapWithDefault(i, "nada", (function (n) {
-                return String(n);
-              }));
-}
-
 function directionsApi(origin, destination) {
   return "https://maps.googleapis.com/maps/api/directions/json?origin=" + (origin + ("&destination=" + (destination + "&key=AIzaSyC6AfIwElNGcfmzz-XyBHUb3ftWb2SL2vU")));
 }
@@ -82,6 +70,20 @@ function canFetch(state) {
   } else {
     return true;
   }
+}
+
+function parseRoute(routeResponse) {
+  return {
+          duration: 5
+        };
+}
+
+function behaviorInterpreter(networkRequest, effect, dispatch) {
+  var actionCtor = effect[2];
+  var api = directionsApi(effect[0], effect[1]);
+  return Curry._2(networkRequest, api, (function (response) {
+                return Curry._1(dispatch, Curry._1(actionCtor, 5));
+              }));
 }
 
 function reducer(state, action) {
@@ -187,9 +189,9 @@ exports.fetchedRoute = fetchedRoute;
 exports.noop = noop;
 exports.initialState = initialState;
 exports.applyFetchAbility = applyFetchAbility;
-exports.displayString = displayString;
-exports.displayInt = displayInt;
 exports.directionsApi = directionsApi;
 exports.canFetch = canFetch;
+exports.parseRoute = parseRoute;
+exports.behaviorInterpreter = behaviorInterpreter;
 exports.reducer = reducer;
 /* No side effect */
