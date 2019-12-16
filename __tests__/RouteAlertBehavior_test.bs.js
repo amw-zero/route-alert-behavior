@@ -5,7 +5,7 @@ var Jest = require("@glennsl/bs-jest/src/jest.js");
 var Block = require("bs-platform/lib/js/block.js");
 var Curry = require("bs-platform/lib/js/curry.js");
 var Belt_List = require("bs-platform/lib/js/belt_List.js");
-var RouteAlertBehavior$RouteAlertBehavior = require("../src/RouteAlertBehavior.bs.js");
+var RouteAlertBehavior = require("../src/RouteAlertBehavior.bs.js");
 
 function testInterpreter(effect, dispatch) {
   return Curry._1(dispatch, Curry._1(effect[2], 90));
@@ -13,10 +13,10 @@ function testInterpreter(effect, dispatch) {
 
 function reduceActions(actions) {
   var state = {
-    contents: RouteAlertBehavior$RouteAlertBehavior.initialState
+    contents: RouteAlertBehavior.initialState
   };
-  return Belt_List.reduce(actions, RouteAlertBehavior$RouteAlertBehavior.initialState, (function (param, action) {
-                RouteAlertBehavior$RouteAlertBehavior.Reffect.makeDispatch(state.contents, RouteAlertBehavior$RouteAlertBehavior.reducer, testInterpreter, (function (s) {
+  return Belt_List.reduce(actions, RouteAlertBehavior.initialState, (function (param, action) {
+                RouteAlertBehavior.Reffect.makeDispatch(state.contents, RouteAlertBehavior.reducer, testInterpreter, (function (s) {
                           state.contents = s;
                           return /* () */0;
                         }))(action);
