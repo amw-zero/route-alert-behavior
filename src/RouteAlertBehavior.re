@@ -19,7 +19,7 @@ module Reffect = {
     };
 
     dispatch;
-  };  
+  };
 };
 
 type route = {
@@ -56,53 +56,51 @@ let directionsApi = (origin, destination) => {
 type routeAlert = {
   origin: string,
   destination: string,
-  durationMinutes: int
+  durationMinutes: int,
 };
 
-type errorResponse = {
-  message: string
-};
+type errorResponse = {message: string};
 
 let errorResponseDecoder = json => {
-  Json.Decode.({
-    message: json |> field("message", string),
-  });
+  Json.Decode.{message: json |> field("message", string)};
 };
 
 let errorResponseEncoder = errorResponse =>
-  Json.Encode.({
-    object_([
-      ("message", errorResponse.message |> string)
-    ])
-  });
+  Json.Encode.(
+    {
+      object_([("message", errorResponse.message |> string)]);
+    }
+  );
 
-let routeAlertDecoder = json => 
-  Json.Decode.({
+let routeAlertDecoder = json =>
+  Json.Decode.{
     origin: json |> field("origin", string),
     destination: json |> field("destination", string),
-    durationMinutes: json |> field("durationMinutes", int)
-  });
+    durationMinutes: json |> field("durationMinutes", int),
+  };
 
 let routeAlertEncoder = routeAlert =>
-  Json.Encode.({
-    object_([
-      ("origin", routeAlert.origin |> string),
-      ("destination", routeAlert.destination |> string),
-      ("durationMinutes", routeAlert.durationMinutes |> int)
-    ])
-  });
+  Json.Encode.(
+    {
+      object_([
+        ("origin", routeAlert.origin |> string),
+        ("destination", routeAlert.destination |> string),
+        ("durationMinutes", routeAlert.durationMinutes |> int),
+      ]);
+    }
+  );
 
-type httpMethod = 
+type httpMethod =
   | Get
-  | Post
+  | Post;
 
 type serverRequest('a) = {
   method: httpMethod,
   path: string,
-  body: option(Js.Json.t)
+  body: option(Js.Json.t),
 };
 
-let createRouteAlertEffectHandler = (routeAlertJson) => {
+let createRouteAlertEffectHandler = routeAlertJson => {
   routeAlertDecoder(routeAlertJson);
 };
 
@@ -132,11 +130,15 @@ type effect('a) =
 let behaviorInterpreter = (networkBridge, effect, dispatch) => {
   switch (effect) {
   | CreateRouteAlert(origin, destination, durationMinutes, actionCtor) =>
-
     // I don't feel that this provides a way to ensure that the endpoint URL is formed correctly
-    let request = { method: Post, path: "/route_alerts", body: Some(routeAlertEncoder({ origin, destination, durationMinutes })) };
+    let request = {
+      method: Post,
+      path: "/route_alerts",
+      body: Some(routeAlertEncoder({origin, destination, durationMinutes})),
+    };
     networkBridge(request, response =>
-      routeAlertDecoder(response).durationMinutes |> actionCtor |> dispatch);
+      routeAlertDecoder(response).durationMinutes |> actionCtor |> dispatch
+    );
   };
 };
 
@@ -168,8 +170,7 @@ let reducer = (state: state, action) => {
           ),
         ),
       )
-    | FetchedRoute(i) =>
-      ({...state, routeDuration: Some(i)}, None);
+    | FetchedRoute(i) => ({...state, routeDuration: Some(i)}, None)
     | Noop => (state, None)
     };
 
@@ -192,4 +193,3 @@ let canFetch = state =>
   | CanFetch => true
   | CannotFetch => false
   };
-
