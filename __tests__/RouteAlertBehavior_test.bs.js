@@ -13,7 +13,7 @@ function testNetworkBridge(request, respond) {
   if (match === "/route_alerts") {
     var match$1 = request.body;
     if (match$1 !== undefined) {
-      return Curry._1(respond, RouteAlertBehavior.routeAlertEncoder(RouteAlertBehavior.createRouteAlertEffectHandler(Caml_option.valFromOption(match$1))));
+      return Curry._1(respond, RouteAlertBehavior.createRouteAlertEffectHandler(Caml_option.valFromOption(match$1)));
     } else {
       return Curry._1(respond, RouteAlertBehavior.errorResponseEncoder({
                       message: "bad body"

@@ -101,7 +101,7 @@ type serverRequest('a) = {
 };
 
 let createRouteAlertEffectHandler = routeAlertJson => {
-  routeAlertDecoder(routeAlertJson);
+  routeAlertDecoder(routeAlertJson)->routeAlertEncoder;
 };
 
 // Reffect model

@@ -9,7 +9,6 @@ let testNetworkBridge = (request, respond) => {
     switch (request.body) {
     | Some(routeAlertJson) =>
       createRouteAlertEffectHandler(routeAlertJson)
-      ->routeAlertEncoder
       ->respond
     | None => errorResponseEncoder({message: "bad body"})->respond
     }

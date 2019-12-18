@@ -73,7 +73,9 @@ function routeAlertEncoder(routeAlert) {
             ]);
 }
 
-var createRouteAlertEffectHandler = routeAlertDecoder;
+function createRouteAlertEffectHandler(routeAlertJson) {
+  return routeAlertEncoder(routeAlertDecoder(routeAlertJson));
+}
 
 function setOrigin(param_0) {
   return /* SetOrigin */Block.__(0, [param_0]);
