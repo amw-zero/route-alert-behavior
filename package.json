@@ -16,5 +16,7 @@
     "@glennsl/bs-jest": "^0.4.9",
     "bs-platform": "^7.0.1"
   },
-  "dependencies": {}
+  "dependencies": {
+    "@glennsl/bs-json": "^5.0.1"
+  }
 }

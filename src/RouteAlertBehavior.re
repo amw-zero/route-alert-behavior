@@ -98,35 +98,82 @@ let canFetch = state =>
 
 // type googleDirections = {routes: array(googleRoute)};
 
+// Server interaction
+
 type calculatedRoute = {
   duration: int
 };
 
-type endpoint =
-  | CalculateRoute2(string);
+type routeAlert = {
+  origin: string,
+  destination: string,
+  durationMinutes: int
+};
 
-let parseRoute = (routeResponse) => {
-  { duration: routeResponse.duration };
-}
+type errorResponse = {
+  message: string
+};
+
+let errorResponseDecoder = json => {
+  Json.Decode.({
+    message: json |> field("message", string),
+  });
+};
+
+let errorResponseEncoder = errorResponse =>
+  Json.Encode.({
+    object_([
+      ("message", errorResponse.message |> string)
+    ])
+  });
+
+let routeAlertDecoder = json => 
+  Json.Decode.({
+    origin: json |> field("origin", string),
+    destination: json |> field("destination", string),
+    durationMinutes: json |> field("durationMinutes", int)
+  });
+
+let routeAlertEncoder = routeAlert =>
+  Json.Encode.({
+    object_([
+      ("origin", routeAlert.origin |> string),
+      ("destination", routeAlert.destination |> string),
+      ("durationMinutes", routeAlert.durationMinutes |> int)
+    ])
+  });
+
+type httpMethod = 
+  | Get
+  | Post
+
+type serverRequest('a) = {
+  method: httpMethod,
+  path: string,
+  body: option(Js.Json.t)
+};
+
+let createRouteAlertEffectHandler = (routeAlertJson) => {
+  routeAlertDecoder(routeAlertJson);
+};
 
 // Reffect model
 
 type effect('a) =
-  | CalculateRoute(string, string, int => 'a);
+  | CreateRouteAlert(string, string, int, int => 'a);
 
-let behaviorInterpreter = (networkRequest, effect, dispatch) => {
+let behaviorInterpreter = (networkBridge, effect, dispatch) => {
   switch (effect) {
-  | CalculateRoute(origin, destination, actionCtor) =>
+  | CreateRouteAlert(origin, destination, durationMinutes, actionCtor) =>
 
-    // I don't feel that this provides a way to know that the endpoint URL is formed correctly
-    let api = directionsApi(origin, destination);
-    let endpoint: endpoint = CalculateRoute2(api);
-    networkRequest(endpoint, response => 
-      parseRoute(response).duration |> actionCtor |> dispatch);
+    // I don't feel that this provides a way to ensure that the endpoint URL is formed correctly
+    let request = { method: Post, path: "/route_alerts", body: Some(routeAlertEncoder({ origin, destination, durationMinutes })) };
+    networkBridge(request, response =>
+      routeAlertDecoder(response).durationMinutes |> actionCtor |> dispatch);
   };
 };
 
-let reducer = (state, action) => {
+let reducer = (state: state, action) => {
   let res =
     switch (action) {
     | SetOrigin(point) => ({...state, origin: Some(point)}, None)
@@ -135,9 +182,10 @@ let reducer = (state, action) => {
     | FetchRoute => (
         {...state, dataLoadingState: Loading},
         Some(
-          CalculateRoute(
+          CreateRouteAlert(
             state.origin->getExn,
             state.destination->getExn,
+            state.minutes->getExn,
             fetchedRoute,
           ),
         ),

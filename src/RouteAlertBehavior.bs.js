@@ -5,6 +5,8 @@ var Block = require("bs-platform/lib/js/block.js");
 var Curry = require("bs-platform/lib/js/curry.js");
 var Belt_Option = require("bs-platform/lib/js/belt_Option.js");
 var Caml_option = require("bs-platform/lib/js/caml_option.js");
+var Json_decode = require("@glennsl/bs-json/src/Json_decode.bs.js");
+var Json_encode = require("@glennsl/bs-json/src/Json_encode.bs.js");
 
 function makeDispatch(state, reducer, interpreter, onNextState) {
   var dispatch = function (action) {
@@ -72,20 +74,68 @@ function canFetch(state) {
   }
 }
 
-function parseRoute(routeResponse) {
+function errorResponseDecoder(json) {
   return {
-          duration: routeResponse.duration
+          message: Json_decode.field("message", Json_decode.string, json)
         };
 }
 
-function behaviorInterpreter(networkRequest, effect, dispatch) {
-  var actionCtor = effect[2];
-  var api = directionsApi(effect[0], effect[1]);
-  var endpoint = /* CalculateRoute2 */[api];
-  return Curry._2(networkRequest, endpoint, (function (response) {
-                return Curry._1(dispatch, Curry._1(actionCtor, ({
-                                  duration: response.duration
-                                }).duration));
+function errorResponseEncoder(errorResponse) {
+  return Json_encode.object_(/* :: */[
+              /* tuple */[
+                "message",
+                errorResponse.message
+              ],
+              /* [] */0
+            ]);
+}
+
+function routeAlertDecoder(json) {
+  return {
+          origin: Json_decode.field("origin", Json_decode.string, json),
+          destination: Json_decode.field("destination", Json_decode.string, json),
+          durationMinutes: Json_decode.field("durationMinutes", Json_decode.$$int, json)
+        };
+}
+
+function routeAlertEncoder(routeAlert) {
+  return Json_encode.object_(/* :: */[
+              /* tuple */[
+                "origin",
+                routeAlert.origin
+              ],
+              /* :: */[
+                /* tuple */[
+                  "destination",
+                  routeAlert.destination
+                ],
+                /* :: */[
+                  /* tuple */[
+                    "durationMinutes",
+                    routeAlert.durationMinutes
+                  ],
+                  /* [] */0
+                ]
+              ]
+            ]);
+}
+
+var createRouteAlertEffectHandler = routeAlertDecoder;
+
+function behaviorInterpreter(networkBridge, effect, dispatch) {
+  var actionCtor = effect[3];
+  var request_body = Caml_option.some(routeAlertEncoder({
+            origin: effect[0],
+            destination: effect[1],
+            durationMinutes: effect[2]
+          }));
+  var request = {
+    method_: /* Post */1,
+    path: "/route_alerts",
+    body: request_body
+  };
+  return Curry._2(networkBridge, request, (function (response) {
+                return Curry._1(dispatch, Curry._1(actionCtor, routeAlertDecoder(response).durationMinutes));
               }));
 }
 
@@ -101,9 +151,10 @@ function reducer(state, action) {
           dataLoadingState: /* Loading */0,
           routeDuration: state.routeDuration
         },
-        /* CalculateRoute */[
+        /* CreateRouteAlert */[
           Belt_Option.getExn(state.origin),
           Belt_Option.getExn(state.destination),
+          Belt_Option.getExn(state.minutes),
           fetchedRoute
         ]
       ] : /* tuple */[
@@ -194,7 +245,11 @@ exports.initialState = initialState;
 exports.applyFetchAbility = applyFetchAbility;
 exports.directionsApi = directionsApi;
 exports.canFetch = canFetch;
-exports.parseRoute = parseRoute;
+exports.errorResponseDecoder = errorResponseDecoder;
+exports.errorResponseEncoder = errorResponseEncoder;
+exports.routeAlertDecoder = routeAlertDecoder;
+exports.routeAlertEncoder = routeAlertEncoder;
+exports.createRouteAlertEffectHandler = createRouteAlertEffectHandler;
 exports.behaviorInterpreter = behaviorInterpreter;
 exports.reducer = reducer;
 /* No side effect */

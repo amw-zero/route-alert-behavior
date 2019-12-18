@@ -3,9 +3,19 @@ open Expect;
 open Belt.List;
 open RouteAlertBehavior;
 
-let testInterpreter = behaviorInterpreter((endpoint, respond) => {
-  respond({ duration: 90 });
-});
+let testNetworkBridge = (request, respond) => {
+  switch (request.path) {
+    | "/route_alerts" =>
+      switch (request.body) {
+        | Some(routeAlertJson) => createRouteAlertEffectHandler(routeAlertJson)->routeAlertEncoder->respond;
+        | None => errorResponseEncoder({ message: "bad body" })->respond;
+      }
+
+    | _ => errorResponseEncoder({ message: "bad route" })->respond;
+  };
+};
+
+let testInterpreter = behaviorInterpreter(testNetworkBridge);
 
 let reduceActions = (actions) => {
   let state = ref(initialState);
@@ -55,7 +65,7 @@ describe("Route Alert Behavior", () => {
     ]);
 
     let passed = switch(finalState.routeDuration) {
-      | Some(90) => true
+      | Some(5) => true
       | _ => false
     };
 

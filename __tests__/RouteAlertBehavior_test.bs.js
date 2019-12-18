@@ -5,14 +5,29 @@ var Jest = require("@glennsl/bs-jest/src/jest.js");
 var Block = require("bs-platform/lib/js/block.js");
 var Curry = require("bs-platform/lib/js/curry.js");
 var Belt_List = require("bs-platform/lib/js/belt_List.js");
+var Caml_option = require("bs-platform/lib/js/caml_option.js");
 var RouteAlertBehavior = require("../src/RouteAlertBehavior.bs.js");
 
+function testNetworkBridge(request, respond) {
+  var match = request.path;
+  if (match === "/route_alerts") {
+    var match$1 = request.body;
+    if (match$1 !== undefined) {
+      return Curry._1(respond, RouteAlertBehavior.routeAlertEncoder(RouteAlertBehavior.createRouteAlertEffectHandler(Caml_option.valFromOption(match$1))));
+    } else {
+      return Curry._1(respond, RouteAlertBehavior.errorResponseEncoder({
+                      message: "bad body"
+                    }));
+    }
+  } else {
+    return Curry._1(respond, RouteAlertBehavior.errorResponseEncoder({
+                    message: "bad route"
+                  }));
+  }
+}
+
 function testInterpreter(param, param$1) {
-  return RouteAlertBehavior.behaviorInterpreter((function (endpoint, respond) {
-                return Curry._1(respond, {
-                            duration: 90
-                          });
-              }), param, param$1);
+  return RouteAlertBehavior.behaviorInterpreter(testNetworkBridge, param, param$1);
 }
 
 function reduceActions(actions) {
@@ -75,11 +90,12 @@ Jest.describe("Route Alert Behavior", (function (param) {
                             ]
                           ]);
                       var match = finalState.routeDuration;
-                      var passed = match !== undefined ? match === 90 : false;
+                      var passed = match !== undefined ? match === 5 : false;
                       return Jest.Expect.toBe(true, Jest.Expect.expect(passed));
                     }));
       }));
 
+exports.testNetworkBridge = testNetworkBridge;
 exports.testInterpreter = testInterpreter;
 exports.reduceActions = reduceActions;
 exports.canFetch = canFetch;
