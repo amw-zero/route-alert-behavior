@@ -30,15 +30,6 @@ type route = {
   destination: string,
 };
 
-[@bs.deriving accessors]
-type action =
-  | SetOrigin(string)
-  | SetDestination(string)
-  | SetMinutes(int)
-  | FetchRoute
-  | FetchedRoute(int)
-  | Noop;
-
 type routeFetchAbility =
   | CanFetch
   | CannotFetch;
@@ -47,34 +38,7 @@ type dataLoadingState =
   | Loading
   | NotLoading;
 
-type state = {
-  origin: option(string),
-  destination: option(string),
-  minutes: option(int),
-  routeFetchAbility,
-  dataLoadingState,
-  routeDuration: option(int),
-};
-
-let initialState = {
-  origin: None,
-  destination: None,
-  minutes: None,
-  routeFetchAbility: CannotFetch,
-  dataLoadingState: NotLoading,
-  routeDuration: None,
-};
-
-let applyFetchAbility = stateEffect => {
-  let state = fst(stateEffect);
-  let routeFetchAbility =
-    switch (state.origin, state.destination, state.minutes) {
-    | (Some(_), Some(_), Some(_)) => CanFetch
-    | _ => CannotFetch
-    };
-
-  ({...state, routeFetchAbility}, snd(stateEffect));
-};
+// Server interaction
 
 let directionsApi = (origin, destination) => {
   "https://maps.googleapis.com/maps/api/directions/json?origin="
@@ -84,12 +48,6 @@ let directionsApi = (origin, destination) => {
   ++ "&key=AIzaSyC6AfIwElNGcfmzz-XyBHUb3ftWb2SL2vU";
 };
 
-let canFetch = state =>
-  switch (state.routeFetchAbility) {
-  | CanFetch => true
-  | CannotFetch => false
-  };
-
 // type googleDuration = {value: int};
 
 // type googleLeg = {duration: googleDuration};
@@ -97,12 +55,6 @@ let canFetch = state =>
 // type googleRoute = {legs: array(googleLeg)};
 
 // type googleDirections = {routes: array(googleRoute)};
-
-// Server interaction
-
-type calculatedRoute = {
-  duration: int
-};
 
 type routeAlert = {
   origin: string,
@@ -159,6 +111,24 @@ let createRouteAlertEffectHandler = (routeAlertJson) => {
 
 // Reffect model
 
+type state = {
+  origin: option(string),
+  destination: option(string),
+  minutes: option(int),
+  routeFetchAbility,
+  dataLoadingState,
+  routeDuration: option(int),
+};
+
+[@bs.deriving accessors]
+type action =
+  | SetOrigin(string)
+  | SetDestination(string)
+  | SetMinutes(int)
+  | FetchRoute
+  | FetchedRoute(int)
+  | Noop;
+
 type effect('a) =
   | CreateRouteAlert(string, string, int, int => 'a);
 
@@ -171,6 +141,17 @@ let behaviorInterpreter = (networkBridge, effect, dispatch) => {
     networkBridge(request, response =>
       routeAlertDecoder(response).durationMinutes |> actionCtor |> dispatch);
   };
+};
+
+let applyFetchAbility = stateEffect => {
+  let state = fst(stateEffect);
+  let routeFetchAbility =
+    switch (state.origin, state.destination, state.minutes) {
+    | (Some(_), Some(_), Some(_)) => CanFetch
+    | _ => CannotFetch
+    };
+
+  ({...state, routeFetchAbility}, snd(stateEffect));
 };
 
 let reducer = (state: state, action) => {
@@ -197,3 +178,21 @@ let reducer = (state: state, action) => {
 
   applyFetchAbility(res);
 };
+
+// View Helpers
+
+let initialState = {
+  origin: None,
+  destination: None,
+  minutes: None,
+  routeFetchAbility: CannotFetch,
+  dataLoadingState: NotLoading,
+  routeDuration: None,
+};
+
+let canFetch = state =>
+  switch (state.routeFetchAbility) {
+  | CanFetch => true
+  | CannotFetch => false
+  };
+

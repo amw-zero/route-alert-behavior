@@ -26,52 +26,8 @@ var Reffect = {
   makeDispatch: makeDispatch
 };
 
-function setOrigin(param_0) {
-  return /* SetOrigin */Block.__(0, [param_0]);
-}
-
-function setDestination(param_0) {
-  return /* SetDestination */Block.__(1, [param_0]);
-}
-
-function setMinutes(param_0) {
-  return /* SetMinutes */Block.__(2, [param_0]);
-}
-
-function fetchedRoute(param_0) {
-  return /* FetchedRoute */Block.__(3, [param_0]);
-}
-
-function applyFetchAbility(stateEffect) {
-  var state = stateEffect[0];
-  var match = state.origin;
-  var match$1 = state.destination;
-  var match$2 = state.minutes;
-  var routeFetchAbility = match !== undefined && match$1 !== undefined && match$2 !== undefined ? /* CanFetch */0 : /* CannotFetch */1;
-  return /* tuple */[
-          {
-            origin: state.origin,
-            destination: state.destination,
-            minutes: state.minutes,
-            routeFetchAbility: routeFetchAbility,
-            dataLoadingState: state.dataLoadingState,
-            routeDuration: state.routeDuration
-          },
-          stateEffect[1]
-        ];
-}
-
 function directionsApi(origin, destination) {
   return "https://maps.googleapis.com/maps/api/directions/json?origin=" + (origin + ("&destination=" + (destination + "&key=AIzaSyC6AfIwElNGcfmzz-XyBHUb3ftWb2SL2vU")));
-}
-
-function canFetch(state) {
-  var match = state.routeFetchAbility;
-  if (match) {
-    return false;
-  } else {
-    return true;
-  }
 }
 
 function errorResponseDecoder(json) {
@@ -122,6 +78,22 @@ function routeAlertEncoder(routeAlert) {
 
 var createRouteAlertEffectHandler = routeAlertDecoder;
 
+function setOrigin(param_0) {
+  return /* SetOrigin */Block.__(0, [param_0]);
+}
+
+function setDestination(param_0) {
+  return /* SetDestination */Block.__(1, [param_0]);
+}
+
+function setMinutes(param_0) {
+  return /* SetMinutes */Block.__(2, [param_0]);
+}
+
+function fetchedRoute(param_0) {
+  return /* FetchedRoute */Block.__(3, [param_0]);
+}
+
 function behaviorInterpreter(networkBridge, effect, dispatch) {
   var actionCtor = effect[3];
   var request_body = Caml_option.some(routeAlertEncoder({
@@ -137,6 +109,25 @@ function behaviorInterpreter(networkBridge, effect, dispatch) {
   return Curry._2(networkBridge, request, (function (response) {
                 return Curry._1(dispatch, Curry._1(actionCtor, routeAlertDecoder(response).durationMinutes));
               }));
+}
+
+function applyFetchAbility(stateEffect) {
+  var state = stateEffect[0];
+  var match = state.origin;
+  var match$1 = state.destination;
+  var match$2 = state.minutes;
+  var routeFetchAbility = match !== undefined && match$1 !== undefined && match$2 !== undefined ? /* CanFetch */0 : /* CannotFetch */1;
+  return /* tuple */[
+          {
+            origin: state.origin,
+            destination: state.destination,
+            minutes: state.minutes,
+            routeFetchAbility: routeFetchAbility,
+            dataLoadingState: state.dataLoadingState,
+            routeDuration: state.routeDuration
+          },
+          stateEffect[1]
+        ];
 }
 
 function reducer(state, action) {
@@ -221,6 +212,15 @@ function reducer(state, action) {
   return applyFetchAbility(tmp);
 }
 
+function canFetch(state) {
+  var match = state.routeFetchAbility;
+  if (match) {
+    return false;
+  } else {
+    return true;
+  }
+}
+
 var fetchRoute = /* FetchRoute */0;
 
 var noop = /* Noop */1;
@@ -235,21 +235,21 @@ var initialState = {
 };
 
 exports.Reffect = Reffect;
+exports.directionsApi = directionsApi;
+exports.errorResponseDecoder = errorResponseDecoder;
+exports.errorResponseEncoder = errorResponseEncoder;
+exports.routeAlertDecoder = routeAlertDecoder;
+exports.routeAlertEncoder = routeAlertEncoder;
+exports.createRouteAlertEffectHandler = createRouteAlertEffectHandler;
 exports.setOrigin = setOrigin;
 exports.setDestination = setDestination;
 exports.setMinutes = setMinutes;
 exports.fetchRoute = fetchRoute;
 exports.fetchedRoute = fetchedRoute;
 exports.noop = noop;
-exports.initialState = initialState;
-exports.applyFetchAbility = applyFetchAbility;
-exports.directionsApi = directionsApi;
-exports.canFetch = canFetch;
-exports.errorResponseDecoder = errorResponseDecoder;
-exports.errorResponseEncoder = errorResponseEncoder;
-exports.routeAlertDecoder = routeAlertDecoder;
-exports.routeAlertEncoder = routeAlertEncoder;
-exports.createRouteAlertEffectHandler = createRouteAlertEffectHandler;
 exports.behaviorInterpreter = behaviorInterpreter;
+exports.applyFetchAbility = applyFetchAbility;
 exports.reducer = reducer;
+exports.initialState = initialState;
+exports.canFetch = canFetch;
 /* No side effect */
