@@ -11,13 +11,10 @@ var Json_encode = require("@glennsl/bs-json/src/Json_encode.bs.js");
 function makeDispatch(state, reducer, interpreter, onNextState) {
   var dispatch = function (action) {
     var match = Curry._2(reducer, state, action);
-    var nextEffect = match[1];
     Curry._1(onNextState, match[0]);
-    if (nextEffect !== undefined) {
-      return Curry._2(interpreter, Caml_option.valFromOption(nextEffect), dispatch);
-    } else {
-      return /* () */0;
-    }
+    return Belt_Option.forEach(match[1], (function (e) {
+                  return Curry._2(interpreter, e, dispatch);
+                }));
   };
   return dispatch;
 }

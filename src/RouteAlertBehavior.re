@@ -13,12 +13,9 @@ module Reffect = {
       )
       : dispatchFunc('a) => {
     let rec dispatch = (action: 'a): unit => {
-      let (nextState, nextEffect) = reducer(state, action);
+      let (nextState, effect) = reducer(state, action);
       onNextState(nextState);
-      switch (nextEffect) {
-      | Some(effect) => interpreter(effect, dispatch)
-      | None => ()
-      };
+      effect->forEach(e => interpreter(e, dispatch));
     };
 
     dispatch;
