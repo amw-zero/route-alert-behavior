@@ -13,17 +13,18 @@ function testNetworkBridge(request, respond) {
   if (match === "/route_alerts") {
     var match$1 = request.body;
     if (match$1 !== undefined) {
-      return Curry._1(respond, RouteAlertBehavior.createRouteAlertEffectHandler(Caml_option.valFromOption(match$1)));
+      Curry._1(respond, RouteAlertBehavior.createRouteAlertEffectHandler(Caml_option.valFromOption(match$1)));
     } else {
-      return Curry._1(respond, RouteAlertBehavior.errorResponseEncoder({
-                      message: "bad body"
-                    }));
+      Curry._1(respond, RouteAlertBehavior.errorResponseEncoder({
+                message: "bad body"
+              }));
     }
   } else {
-    return Curry._1(respond, RouteAlertBehavior.errorResponseEncoder({
-                    message: "bad route"
-                  }));
+    Curry._1(respond, RouteAlertBehavior.errorResponseEncoder({
+              message: "bad route"
+            }));
   }
+  return /* () */0;
 }
 
 function testInterpreter(param, param$1) {

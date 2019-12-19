@@ -105,9 +105,10 @@ function behaviorInterpreter(networkBridge, effect, dispatch) {
     path: "/route_alerts",
     body: request_body
   };
-  return Curry._2(networkBridge, request, (function (response) {
-                return Curry._1(dispatch, Curry._1(actionCtor, routeAlertDecoder(response).durationMinutes));
-              }));
+  Curry._2(networkBridge, request, (function (response) {
+          return Curry._1(dispatch, Curry._1(actionCtor, routeAlertDecoder(response).durationMinutes));
+        }));
+  return /* () */0;
 }
 
 function applyFetchAbility(stateEffect) {

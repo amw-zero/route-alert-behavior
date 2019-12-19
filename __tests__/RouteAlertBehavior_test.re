@@ -14,7 +14,7 @@ let testNetworkBridge = (request, respond) => {
     }
 
   | _ => errorResponseEncoder({message: "bad route"})->respond
-  };
+  } |> ignore;
 };
 
 let testInterpreter = behaviorInterpreter(testNetworkBridge);
