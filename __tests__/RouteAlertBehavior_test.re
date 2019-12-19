@@ -4,17 +4,19 @@ open Belt.List;
 open RouteAlertBehavior;
 
 let testNetworkBridge = (request, respond) => {
-  switch (request.path) {
-  | "/route_alerts" =>
-    switch (request.body) {
-    | Some(routeAlertJson) =>
-      createRouteAlertEffectHandler(routeAlertJson)
-      ->respond
-    | None => errorResponseEncoder({message: "bad body"})->respond
-    }
+  (
+    switch (request.path) {
+    | "/route_alerts" =>
+      switch (request.body) {
+      | Some(routeAlertJson) =>
+        createRouteAlertEffectHandler(routeAlertJson)->respond
+      | None => errorResponseEncoder({message: "bad body"})->respond
+      }
 
-  | _ => errorResponseEncoder({message: "bad route"})->respond
-  } |> ignore;
+    | _ => errorResponseEncoder({message: "bad route"})->respond
+    }
+  )
+  |> ignore;
 };
 
 let testInterpreter = behaviorInterpreter(testNetworkBridge);

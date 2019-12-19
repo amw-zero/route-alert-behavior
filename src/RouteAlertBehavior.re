@@ -127,8 +127,9 @@ type action =
 type effect('a) =
   | CreateRouteAlert(string, string, int, int => 'a);
 
-type respondFunc = (Js.Json.t) => unit;
-let behaviorInterpreter = (networkBridge: (serverRequest, respondFunc) => unit, effect, dispatch) => {
+type respondFunc = Js.Json.t => unit;
+let behaviorInterpreter =
+    (networkBridge: (serverRequest, respondFunc) => unit, effect, dispatch) => {
   switch (effect) {
   | CreateRouteAlert(origin, destination, durationMinutes, actionCtor) =>
     // I don't feel that this provides a way to ensure that the endpoint URL is formed correctly
@@ -139,7 +140,8 @@ let behaviorInterpreter = (networkBridge: (serverRequest, respondFunc) => unit, 
     };
     networkBridge(request, response => {
       routeAlertDecoder(response).durationMinutes |> actionCtor |> dispatch
-    }) |> ignore;
+    })
+    |> ignore;
   };
 };
 
