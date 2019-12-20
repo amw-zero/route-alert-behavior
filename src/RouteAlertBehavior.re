@@ -15,7 +15,7 @@ module Reffect = {
     let rec dispatch = (action: 'a): unit => {
       let (nextState, effect) = reducer(state, action);
       onNextState(nextState);
-      effect->forEach(e => interpreter(e, dispatch));
+      forEach(effect, e => interpreter(e, dispatch));
     };
 
     dispatch;
