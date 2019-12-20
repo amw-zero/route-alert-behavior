@@ -3,27 +3,59 @@ open Expect;
 open Belt.List;
 open RouteAlertBehavior;
 
-let testNetworkBridge = (request, respond) => {
-  (
-    switch (request.path) {
-    | "/route_alerts" =>
-      switch (request.body) {
-      | Some(routeAlertJson) =>
-        createRouteAlertEffectHandler(routeAlertJson)->respond
-      | None => errorResponseEncoder({message: "bad body"})->respond
-      }
+let googleDurationEncoder = googleDuration =>
+  Json.Encode.(object_([("value", googleDuration.value |> int)]));
 
-    | _ => errorResponseEncoder({message: "bad route"})->respond
-    }
-  )
-  |> ignore;
+let googleLegEncoder = googleLeg =>
+  Json.Encode.(
+    object_([("duration_in_traffic", googleLeg.duration |> googleDurationEncoder)])
+  );
+
+let googleRouteEncoder = googleRoute =>
+  Json.Encode.(
+    object_([("legs", googleRoute.legs |> list(googleLegEncoder))])
+  );
+
+let googleDirectionsEncoder = googleDirections =>
+  Json.Encode.(
+    object_([
+      ("routes", googleDirections.routes |> list(googleRouteEncoder)),
+    ])
+  );
+
+let serverNetworkBridge = (request, respond) => {
+  let pathString = Js.String.make(request.path);
+  if (Js.String.includes("maps.googleapis.com", pathString)) {
+    let googleDirections = {routes: [{legs: [{
+                                               duration: {
+                                                 value: 6,
+                                               },
+                                             }]}]};
+    respond(googleDirectionsEncoder(googleDirections));
+  };
 };
 
-let testInterpreter = behaviorInterpreter(testNetworkBridge);
+// Need the ability for the network bridge to respond with multiple response types
+
+let clientNetworkBridge = (request, respond) => {
+  switch (request.path) {
+  | "/route_alerts" =>
+    switch (request.body) {
+    | Some(json) =>
+        createRouteAlertEffectHandler(json, serverNetworkBridge, googleDirections => respond(googleDirections)) 
+    | None => errorResponseEncoder({message: "bad body"})->respond
+    };
+  | _ => errorResponseEncoder({message: "bad route"})->respond
+  };
+};
+
+let testInterpreter = behaviorInterpreter(clientNetworkBridge);
 
 let reduceActions = actions => {
   let state = ref(initialState);
-  actions->reduce(
+
+  reduce(
+    actions,
     initialState,
     (_, action) => {
       Reffect.makeDispatch(
@@ -65,7 +97,7 @@ describe("Route Alert Behavior", () => {
     expect(canFetch(finalState.routeFetchAbility)) |> toBe(true);
   });
 
-  test("calculating route duration", () => {
+  test("calculating route duration when calculation is successful", () => {
     let finalState =
       reduceActions([
         SetOrigin("origin"),
@@ -76,10 +108,25 @@ describe("Route Alert Behavior", () => {
 
     let passed =
       switch (finalState.routeDuration) {
-      | Some(5) => true
+      | Some(6) => true
       | _ => false
       };
 
     expect(passed) |> toBe(true);
   });
+  // test("calculating route duration when calculation is unsuccessful", () => {
+  //   let finalState =
+  //     reduceActions([
+  //       SetOrigin("origin"),
+  //       SetDestination("dest"),
+  //       SetMinutes(5),
+  //       FetchRoute,
+  //     ]);
+  //   let passed =
+  //     switch (finalState.routeDuration) {
+  //     | Some(5) => true
+  //     | _ => false
+  //     };
+  //   expect(passed) |> toBe(true);
+  // });
 });

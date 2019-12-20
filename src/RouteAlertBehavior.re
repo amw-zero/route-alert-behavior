@@ -42,16 +42,17 @@ let directionsApi = (origin, destination) => {
   ++ origin
   ++ "&destination="
   ++ destination
-  ++ "&key=AIzaSyC6AfIwElNGcfmzz-XyBHUb3ftWb2SL2vU";
+  ++ "&key=AIzaSyC6AfIwElNGcfmzz-XyBHUb3ftWb2SL2vU"
+  ++ "&departure_time=now";
 };
 
-// type googleDuration = {value: int};
+type googleDuration = {value: int};
 
-// type googleLeg = {duration: googleDuration};
+type googleLeg = {duration: googleDuration};
 
-// type googleRoute = {legs: array(googleLeg)};
+type googleRoute = {legs: list(googleLeg)};
 
-// type googleDirections = {routes: array(googleRoute)};
+type googleDirections = {routes: list(googleRoute)};
 
 type routeAlert = {
   origin: string,
@@ -90,6 +91,20 @@ let routeAlertEncoder = routeAlert =>
     }
   );
 
+let googleDurationDecoder = json =>
+  Json.Decode.{value: json |> field("value", int)};
+
+let googleLegDecoder = json =>
+  Json.Decode.{
+    duration: json |> field("duration_in_traffic", googleDurationDecoder),
+  };
+
+let googleRouteDecoder = json =>
+  Json.Decode.{legs: json |> field("legs", list(googleLegDecoder))};
+
+let googleDirectionsDecoder = json =>
+  Json.Decode.{routes: json |> field("routes", list(googleRouteDecoder))};
+
 type httpMethod =
   | Get
   | Post;
@@ -100,8 +115,13 @@ type serverRequest = {
   body: option(Js.Json.t),
 };
 
-let createRouteAlertEffectHandler = routeAlertJson => {
-  routeAlertDecoder(routeAlertJson)->routeAlertEncoder;
+let createRouteAlertEffectHandler =
+    (routeAlertJson, networkBridge, onComplete) => {
+  let routeAlert = routeAlertDecoder(routeAlertJson);
+  let api = directionsApi(routeAlert.origin, routeAlert.destination);
+  let request = {method: Get, path: api, body: None};
+
+  networkBridge(request, onComplete);
 };
 
 // Reffect model
@@ -124,6 +144,17 @@ type action =
   | FetchedRoute(int)
   | Noop;
 
+let string_of_action = a => {
+  switch (a) {
+  | SetOrigin(o) => "SetOrigin(" ++ o ++ ")"
+  | SetDestination(d) => "SetDetination(" ++ d ++ ")"
+  | SetMinutes(m) => "SetMinutes(" ++ string_of_int(m) ++ ")"
+  | FetchRoute => "FetchRoute"
+  | FetchedRoute(d) => "FetchedRoute(" ++ string_of_int(d) ++ ")"
+  | Noop => "Noop"
+  };
+};
+
 type effect('a) =
   | CreateRouteAlert(string, string, int, int => 'a);
 
@@ -139,7 +170,12 @@ let behaviorInterpreter =
       body: Some(routeAlertEncoder({origin, destination, durationMinutes})),
     };
     networkBridge(request, response => {
-      routeAlertDecoder(response).durationMinutes |> actionCtor |> dispatch
+      googleDirectionsDecoder(response).routes->List.nth(0).legs
+      ->List.nth(0).
+        duration.
+        value
+      |> actionCtor
+      |> dispatch
     })
     |> ignore;
   };
@@ -157,6 +193,7 @@ let applyFetchAbility = stateEffect => {
 };
 
 let reducer = (state: state, action) => {
+  // Js.log("Processing action: " ++ string_of_action(action));
   let res =
     switch (action) {
     | SetOrigin(point) => ({...state, origin: Some(point)}, None)

@@ -6,29 +6,92 @@ var Block = require("bs-platform/lib/js/block.js");
 var Curry = require("bs-platform/lib/js/curry.js");
 var Belt_List = require("bs-platform/lib/js/belt_List.js");
 var Caml_option = require("bs-platform/lib/js/caml_option.js");
+var Json_encode = require("@glennsl/bs-json/src/Json_encode.bs.js");
 var RouteAlertBehavior = require("../src/RouteAlertBehavior.bs.js");
 
-function testNetworkBridge(request, respond) {
+function googleDurationEncoder(googleDuration) {
+  return Json_encode.object_(/* :: */[
+              /* tuple */[
+                "value",
+                googleDuration.value
+              ],
+              /* [] */0
+            ]);
+}
+
+function googleLegEncoder(googleLeg) {
+  return Json_encode.object_(/* :: */[
+              /* tuple */[
+                "duration_in_traffic",
+                googleDurationEncoder(googleLeg.duration)
+              ],
+              /* [] */0
+            ]);
+}
+
+function googleRouteEncoder(googleRoute) {
+  return Json_encode.object_(/* :: */[
+              /* tuple */[
+                "legs",
+                Json_encode.list(googleLegEncoder, googleRoute.legs)
+              ],
+              /* [] */0
+            ]);
+}
+
+function googleDirectionsEncoder(googleDirections) {
+  return Json_encode.object_(/* :: */[
+              /* tuple */[
+                "routes",
+                Json_encode.list(googleRouteEncoder, googleDirections.routes)
+              ],
+              /* [] */0
+            ]);
+}
+
+function serverNetworkBridge(request, respond) {
+  var pathString = String(request.path);
+  if (pathString.includes("maps.googleapis.com")) {
+    return Curry._1(respond, googleDirectionsEncoder({
+                    routes: /* :: */[
+                      {
+                        legs: /* :: */[
+                          {
+                            duration: {
+                              value: 6
+                            }
+                          },
+                          /* [] */0
+                        ]
+                      },
+                      /* [] */0
+                    ]
+                  }));
+  } else {
+    return 0;
+  }
+}
+
+function clientNetworkBridge(request, respond) {
   var match = request.path;
   if (match === "/route_alerts") {
     var match$1 = request.body;
     if (match$1 !== undefined) {
-      Curry._1(respond, RouteAlertBehavior.createRouteAlertEffectHandler(Caml_option.valFromOption(match$1)));
+      return RouteAlertBehavior.createRouteAlertEffectHandler(Caml_option.valFromOption(match$1), serverNetworkBridge, Curry.__1(respond));
     } else {
-      Curry._1(respond, RouteAlertBehavior.errorResponseEncoder({
-                message: "bad body"
-              }));
+      return Curry._1(respond, RouteAlertBehavior.errorResponseEncoder({
+                      message: "bad body"
+                    }));
     }
   } else {
-    Curry._1(respond, RouteAlertBehavior.errorResponseEncoder({
-              message: "bad route"
-            }));
+    return Curry._1(respond, RouteAlertBehavior.errorResponseEncoder({
+                    message: "bad route"
+                  }));
   }
-  return /* () */0;
 }
 
 function testInterpreter(param, param$1) {
-  return RouteAlertBehavior.behaviorInterpreter(testNetworkBridge, param, param$1);
+  return RouteAlertBehavior.behaviorInterpreter(clientNetworkBridge, param, param$1);
 }
 
 function reduceActions(actions) {
@@ -76,7 +139,7 @@ Jest.describe("Route Alert Behavior", (function (param) {
                     ]);
                 return Jest.Expect.toBe(true, Jest.Expect.expect(finalState.routeFetchAbility ? false : true));
               }));
-        return Jest.test("calculating route duration", (function (param) {
+        return Jest.test("calculating route duration when calculation is successful", (function (param) {
                       var finalState = reduceActions(/* :: */[
                             /* SetOrigin */Block.__(0, ["origin"]),
                             /* :: */[
@@ -91,12 +154,17 @@ Jest.describe("Route Alert Behavior", (function (param) {
                             ]
                           ]);
                       var match = finalState.routeDuration;
-                      var passed = match !== undefined ? match === 5 : false;
+                      var passed = match !== undefined ? match === 6 : false;
                       return Jest.Expect.toBe(true, Jest.Expect.expect(passed));
                     }));
       }));
 
-exports.testNetworkBridge = testNetworkBridge;
+exports.googleDurationEncoder = googleDurationEncoder;
+exports.googleLegEncoder = googleLegEncoder;
+exports.googleRouteEncoder = googleRouteEncoder;
+exports.googleDirectionsEncoder = googleDirectionsEncoder;
+exports.serverNetworkBridge = serverNetworkBridge;
+exports.clientNetworkBridge = clientNetworkBridge;
 exports.testInterpreter = testInterpreter;
 exports.reduceActions = reduceActions;
 exports.canFetch = canFetch;
