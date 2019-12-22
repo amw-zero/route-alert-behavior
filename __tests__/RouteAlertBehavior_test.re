@@ -114,19 +114,4 @@ describe("Route Alert Behavior", () => {
 
     expect(passed) |> toBe(true);
   });
-  // test("calculating route duration when calculation is unsuccessful", () => {
-  //   let finalState =
-  //     reduceActions([
-  //       SetOrigin("origin"),
-  //       SetDestination("dest"),
-  //       SetMinutes(5),
-  //       FetchRoute,
-  //     ]);
-  //   let passed =
-  //     switch (finalState.routeDuration) {
-  //     | Some(5) => true
-  //     | _ => false
-  //     };
-  //   expect(passed) |> toBe(true);
-  // });
 });
