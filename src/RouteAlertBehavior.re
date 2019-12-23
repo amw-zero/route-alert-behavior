@@ -154,6 +154,7 @@ type effect('a) =
   | CreateRouteAlert(string, string, int, int => 'a);
 
 type respondFunc = Js.Json.t => unit;
+
 let behaviorInterpreter =
     (networkBridge: (serverRequest, respondFunc) => unit, effect, dispatch) => {
   switch (effect) {
