@@ -22,11 +22,6 @@ module Reffect = {
   };
 };
 
-type route = {
-  origin: string,
-  destination: string,
-};
-
 type routeFetchAbility =
   | CanFetch
   | CannotFetch;
