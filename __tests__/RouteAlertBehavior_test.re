@@ -23,7 +23,7 @@ let googleDirectionsEncoder = googleDirections =>
     ])
   );
 
-let serverNetworkBridge = (request, respond) => {
+let serverNetworkBridge = (request: serverRequest, respond) => {
   let pathString = Js.String.make(request.path);
   if (Js.String.includes("maps.googleapis.com", pathString)) {
     let googleDirections = {routes: [{legs: [{
@@ -37,7 +37,7 @@ let serverNetworkBridge = (request, respond) => {
 
 // Need the ability for the network bridge to respond with multiple response types
 
-let clientNetworkBridge = (request, respond) => {
+let clientNetworkBridge = (request: serverRequest, respond) => {
   switch (request.path) {
   | "/route_alerts" =>
     switch (request.body) {

@@ -4,6 +4,10 @@
 var List = require("bs-platform/lib/js/list.js");
 var Block = require("bs-platform/lib/js/block.js");
 var Curry = require("bs-platform/lib/js/curry.js");
+var Belt_Id = require("bs-platform/lib/js/belt_Id.js");
+var Belt_Map = require("bs-platform/lib/js/belt_Map.js");
+var Caml_obj = require("bs-platform/lib/js/caml_obj.js");
+var Belt_List = require("bs-platform/lib/js/belt_List.js");
 var Belt_Option = require("bs-platform/lib/js/belt_Option.js");
 var Caml_option = require("bs-platform/lib/js/caml_option.js");
 var Json_decode = require("@glennsl/bs-json/src/Json_decode.bs.js");
@@ -26,6 +30,10 @@ var Reffect = {
 
 function directionsApi(origin, destination) {
   return "https://maps.googleapis.com/maps/api/directions/json?origin=" + (origin + ("&destination=" + (destination + "&key=AIzaSyC6AfIwElNGcfmzz-XyBHUb3ftWb2SL2vU&departure_time=now")));
+}
+
+function durationFromDirections(gd) {
+  return List.nth(List.nth(gd.routes, 0).legs, 0).duration.value;
 }
 
 function errorResponseDecoder(json) {
@@ -145,26 +153,17 @@ function string_of_action(a) {
       case /* SetMinutes */2 :
           return "SetMinutes(" + (String(a[0]) + ")");
       case /* FetchedRoute */3 :
-          return "FetchedRoute(" + (String(a[0]) + ")");
+          return "FetchedRoute(" + (String(durationFromDirections(a[0])) + ")");
       
     }
   }
 }
 
 function behaviorInterpreter(networkBridge, effect, dispatch) {
-  var actionCtor = effect[3];
-  var request_body = Caml_option.some(routeAlertEncoder({
-            origin: effect[0],
-            destination: effect[1],
-            durationMinutes: effect[2]
-          }));
-  var request = {
-    method_: /* Post */1,
-    path: "/route_alerts",
-    body: request_body
-  };
-  Curry._2(networkBridge, request, (function (response) {
-          return Curry._1(dispatch, Curry._1(actionCtor, List.nth(List.nth(googleDirectionsDecoder(response).routes, 0).legs, 0).duration.value));
+  var actionCtor = effect[2];
+  var decoder = effect[1];
+  Curry._2(networkBridge, effect[0], (function (response) {
+          return Curry._1(dispatch, Curry._1(actionCtor, Curry._1(decoder, response)));
         }));
   return /* () */0;
 }
@@ -188,6 +187,53 @@ function applyFetchAbility(stateEffect) {
         ];
 }
 
+function endpointFor(endpointType) {
+  return {
+          path: "/route_alerts",
+          method_: /* Post */1,
+          effectHandler: createRouteAlertEffectHandler
+        };
+}
+
+var cmp = Caml_obj.caml_compare;
+
+var EndpointComparable = Belt_Id.MakeComparable({
+      cmp: cmp
+    });
+
+var endpointRegistry = Belt_List.reduce(/* :: */[
+      /* RouteAlertCreate */0,
+      /* [] */0
+    ], Belt_Map.make(EndpointComparable), (function (registry, endpointType) {
+        return Belt_Map.set(registry, /* RouteAlertCreate */0, {
+                    path: "/route_alerts",
+                    method_: /* Post */1,
+                    effectHandler: createRouteAlertEffectHandler
+                  });
+      }));
+
+function routeAlertCreate(origin, destination, minutes, afterActionCtor) {
+  var request_body = Caml_option.some(routeAlertEncoder({
+            origin: origin,
+            destination: destination,
+            durationMinutes: minutes
+          }));
+  var request = {
+    method_: /* Post */1,
+    path: "/route_alerts",
+    body: request_body
+  };
+  return /* HttpRequest */[
+          request,
+          googleDirectionsDecoder,
+          afterActionCtor
+        ];
+}
+
+var Api = {
+  routeAlertCreate: routeAlertCreate
+};
+
 function reducer(state, action) {
   var tmp;
   if (typeof action === "number") {
@@ -200,12 +246,7 @@ function reducer(state, action) {
           dataLoadingState: /* Loading */0,
           routeDuration: state.routeDuration
         },
-        /* CreateRouteAlert */[
-          Belt_Option.getExn(state.origin),
-          Belt_Option.getExn(state.destination),
-          Belt_Option.getExn(state.minutes),
-          fetchedRoute
-        ]
+        routeAlertCreate(Belt_Option.getExn(state.origin), Belt_Option.getExn(state.destination), Belt_Option.getExn(state.minutes), fetchedRoute)
       ] : /* tuple */[
         state,
         undefined
@@ -259,7 +300,7 @@ function reducer(state, action) {
               minutes: state.minutes,
               routeFetchAbility: state.routeFetchAbility,
               dataLoadingState: state.dataLoadingState,
-              routeDuration: action[0]
+              routeDuration: durationFromDirections(action[0])
             },
             undefined
           ];
@@ -294,6 +335,7 @@ var initialState = {
 
 exports.Reffect = Reffect;
 exports.directionsApi = directionsApi;
+exports.durationFromDirections = durationFromDirections;
 exports.errorResponseDecoder = errorResponseDecoder;
 exports.errorResponseEncoder = errorResponseEncoder;
 exports.routeAlertDecoder = routeAlertDecoder;
@@ -312,7 +354,11 @@ exports.noop = noop;
 exports.string_of_action = string_of_action;
 exports.behaviorInterpreter = behaviorInterpreter;
 exports.applyFetchAbility = applyFetchAbility;
+exports.endpointFor = endpointFor;
+exports.EndpointComparable = EndpointComparable;
+exports.endpointRegistry = endpointRegistry;
+exports.Api = Api;
 exports.reducer = reducer;
 exports.initialState = initialState;
 exports.canFetch = canFetch;
-/* No side effect */
+/* EndpointComparable Not a pure module */
