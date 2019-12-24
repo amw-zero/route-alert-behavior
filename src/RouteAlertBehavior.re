@@ -49,13 +49,8 @@ type googleRoute = {legs: list(googleLeg)};
 
 type googleDirections = {routes: list(googleRoute)};
 
-let durationFromDirections = gd => 
-  gd.routes
-    ->List.nth(0).
-    legs
-    ->List.nth(0).
-    duration.
-    value;
+let durationFromDirections = gd =>
+  gd.routes->List.nth(0).legs->List.nth(0).duration.value;
 
 type routeAlert = {
   origin: string,
@@ -118,18 +113,18 @@ type serverRequest = {
   body: option(Js.Json.t),
 };
 
-type onCompleteFunc = (Js.Json.t) => unit;
+type onCompleteFunc = Js.Json.t => unit;
 type networkBridgeFunc = (serverRequest, onCompleteFunc) => unit;
 type effectHandler = (Js.Json.t, networkBridgeFunc, onCompleteFunc) => unit;
 
 let createRouteAlertEffectHandler: effectHandler =
-    (routeAlertJson, networkBridge, onComplete) => {
-  let routeAlert = routeAlertDecoder(routeAlertJson);
-  let api = directionsApi(routeAlert.origin, routeAlert.destination);
-  let request = {method: Get, path: api, body: None};
+  (routeAlertJson, networkBridge, onComplete) => {
+    let routeAlert = routeAlertDecoder(routeAlertJson);
+    let api = directionsApi(routeAlert.origin, routeAlert.destination);
+    let request = {method: Get, path: api, body: None};
 
-  networkBridge(request, onComplete);
-};
+    networkBridge(request, onComplete);
+  };
 
 // Reffect model
 
@@ -157,7 +152,8 @@ let string_of_action = a => {
   | SetDestination(d) => "SetDetination(" ++ d ++ ")"
   | SetMinutes(m) => "SetMinutes(" ++ string_of_int(m) ++ ")"
   | FetchRoute => "FetchRoute"
-  | FetchedRoute(gd) => "FetchedRoute(" ++ durationFromDirections(gd)->string_of_int ++ ")"
+  | FetchedRoute(gd) =>
+    "FetchedRoute(" ++ durationFromDirections(gd)->string_of_int ++ ")"
   | Noop => "Noop"
   };
 };
@@ -170,11 +166,9 @@ let behaviorInterpreter =
   switch (effect) {
   | HttpRequest(request, decoder, actionCtor) =>
     networkBridge(request, response => {
-      decoder(response)
-      |> actionCtor
-      |> dispatch
+      decoder(response) |> actionCtor |> dispatch
     })
-    |> ignore;
+    |> ignore
   };
 };
 
@@ -194,63 +188,47 @@ type endpointType =
 
 type endpoint = {
   path: string,
-  method: httpMethod, 
+  method: httpMethod,
   effectHandler,
 };
 
-let endpointFor = endpointType => 
+let endpointFor = endpointType =>
   switch (endpointType) {
-  | RouteAlertCreate => { path: "/route_alerts", method: Post, effectHandler: createRouteAlertEffectHandler }
+  | RouteAlertCreate => {
+      path: "/route_alerts",
+      method: Post,
+      effectHandler: createRouteAlertEffectHandler,
+    }
   };
 
 module EndpointComparable =
   Belt.Id.MakeComparable({
     type t = endpointType;
-    let cmp = (e1, e2) => Pervasives.compare(e1, e2)
+    let cmp = (e1, e2) => Pervasives.compare(e1, e2);
   });
 
-let endpointRegistry = Belt.List.reduce(
-  [RouteAlertCreate],
-  Belt.Map.make(~id=(module EndpointComparable)), 
-  (registry, endpointType) => Belt.Map.set(
-    registry, 
-    RouteAlertCreate,
-    endpointFor(endpointType)
-  )
-);
+let endpointRegistry =
+  Belt.List.reduce(
+    [RouteAlertCreate],
+    Belt.Map.make(~id=(module EndpointComparable)),
+    (registry, endpointType) =>
+    Belt.Map.set(registry, RouteAlertCreate, endpointFor(endpointType))
+  );
 
-module Api {
+module Api = {
   let routeAlertCreate = (origin, destination, minutes, afterActionCtor) => {
     let request = {
       method: Post,
       path: "/route_alerts",
-      body: Some(routeAlertEncoder({origin, destination, durationMinutes: minutes})),
+      body:
+        Some(
+          routeAlertEncoder({origin, destination, durationMinutes: minutes}),
+        ),
     };
 
-    HttpRequest(
-      request,
-      googleDirectionsDecoder,
-      afterActionCtor
-    );
+    HttpRequest(request, googleDirectionsDecoder, afterActionCtor);
   };
 };
-
-// Some(
-//           Axios.get(Belt.Map.getExn(endpointRegistry, RouteAlertCreate))
-//           |> IO.RJs.Promise.toIOLazy
-//           IO.suspend(() => )
-//         )
-// //        () => Axios.get("somewhere")
-// //        IO.suspend(() => Belt.Map.String.get(endpointRegistry, "hey"));
-//         Some(
-//           CreateRouteAlert(
-//             state.origin->getExn,
-//             state.destination->getExn,
-//             state.minutes->getExn,
-//             fetchedRoute,
-//           ),
-//         ),
-
 
 let reducer = (state: state, action) => {
   // Js.log("Processing action: " ++ string_of_action(action));
@@ -267,10 +245,13 @@ let reducer = (state: state, action) => {
             state.destination->getExn,
             state.minutes->getExn,
             fetchedRoute,
-          )
+          ),
         ),
       )
-    | FetchedRoute(gd) => ({...state, routeDuration: Some(durationFromDirections(gd))}, None)
+    | FetchedRoute(gd) => (
+        {...state, routeDuration: Some(durationFromDirections(gd))},
+        None,
+      )
     | Noop => (state, None)
     };
 
