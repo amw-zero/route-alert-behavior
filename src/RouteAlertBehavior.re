@@ -163,13 +163,12 @@ type effect('d, 'a) =
 
 let behaviorInterpreter =
     (networkBridge: (serverRequest, onCompleteFunc) => unit, effect, dispatch) => {
-  switch (effect) {
+  let _ = switch (effect) {
   | HttpRequest(request, decoder, actionCtor) =>
     networkBridge(request, response => {
       decoder(response) |> actionCtor |> dispatch
-    })
-    |> ignore
-  };
+    });
+  }
 };
 
 let applyFetchAbility = stateEffect => {
