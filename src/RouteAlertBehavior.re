@@ -1,21 +1,62 @@
 open Belt.Option;
+open Relude.Globals;
+
+[@bs.deriving accessors]
+type thing = 
+  | Constructor(string, int);
+
+type httpMethod =
+  | Get
+  | Post;
+
+type serverRequest = {
+  method: httpMethod,
+  path: string,
+  body: option(Js.Json.t),
+};
+
+type onCompleteFunc = Js.Json.t => unit;
+
+type env = {
+  networkBridge: (serverRequest, onCompleteFunc) => unit,
+};
+
+type error = {message: string};
+
+module RIO = RIO.WithErrorAndEnv(
+  {
+    type t = error;
+  },
+  {
+    type t = env;
+  }
+);
+
+let ((<$>), (<#>), (>>=)) = RIO.Infix.((<$>), (<#>), (>>=));
 
 module Reffect = {
-  type reducerFunc('s, 'a, 'e) = ('s, 'a) => ('s, option('e));
+  type reducerFunc('s, 'a) = ('s, 'a) => ('s, option(RIO.t('a)))
   type dispatchFunc('a) = 'a => unit;
 
   let makeDispatch =
       (
         state: 's,
-        reducer: reducerFunc('s, 'a, 'e),
-        interpreter: ('e, dispatchFunc('a)) => unit,
+        reducer: reducerFunc('s, 'a),
+        environment: env,
         onNextState: 's => unit,
       )
       : dispatchFunc('a) => {
     let rec dispatch = (action: 'a): unit => {
       let (nextState, effect) = reducer(state, action);
       onNextState(nextState);
-      forEach(effect, e => interpreter(e, dispatch));
+      forEach(effect, e =>
+        RIO.runRIO(environment, e)
+        |> IO.unsafeRunAsync(
+          fun
+          | Ok(a) => dispatch(a)
+          | Error(_) => ()
+        )
+      );
     };
 
     dispatch;
@@ -50,7 +91,10 @@ type googleRoute = {legs: list(googleLeg)};
 type googleDirections = {routes: list(googleRoute)};
 
 let durationFromDirections = gd =>
-  gd.routes->List.nth(0).legs->List.nth(0).duration.value;
+  List.head(gd.routes)
+  ->Option.bind(r => 
+    List.head(r.legs) |> Option.map(l => l.duration.value)
+  );
 
 type routeAlert = {
   origin: string,
@@ -103,17 +147,8 @@ let googleRouteDecoder = json =>
 let googleDirectionsDecoder = json =>
   Json.Decode.{routes: json |> field("routes", list(googleRouteDecoder))};
 
-type httpMethod =
-  | Get
-  | Post;
 
-type serverRequest = {
-  method: httpMethod,
-  path: string,
-  body: option(Js.Json.t),
-};
 
-type onCompleteFunc = Js.Json.t => unit;
 type networkBridgeFunc = (serverRequest, onCompleteFunc) => unit;
 type effectHandler = (Js.Json.t, networkBridgeFunc, onCompleteFunc) => unit;
 
@@ -144,7 +179,6 @@ type action =
   | SetMinutes(int)
   | FetchRoute
   | FetchedRoute(googleDirections)
-  | Noop;
 
 let string_of_action = a => {
   switch (a) {
@@ -153,22 +187,28 @@ let string_of_action = a => {
   | SetMinutes(m) => "SetMinutes(" ++ string_of_int(m) ++ ")"
   | FetchRoute => "FetchRoute"
   | FetchedRoute(gd) =>
-    "FetchedRoute(" ++ durationFromDirections(gd)->string_of_int ++ ")"
-  | Noop => "Noop"
+    "FetchedRoute(" ++ (durationFromDirections(gd) |> Option.fold("default", string_of_int)) ++ ")"
   };
 };
 
-type effect('d, 'a) =
-  | HttpRequest(serverRequest, Json.Decode.decoder('d), 'd => 'a);
+// Unused
+type jsonSerializable('a) = {
+  data: 'a,
+  encoder: Json.Encode.encoder('a),
+  decoder:  Json.Decode.decoder('a)
+};
 
-let behaviorInterpreter =
-    (networkBridge: (serverRequest, onCompleteFunc) => unit, effect, dispatch) => {
-  let _ = switch (effect) {
-  | HttpRequest(request, decoder, actionCtor) =>
-    networkBridge(request, response => {
-      decoder(response) |> actionCtor |> dispatch
-    });
-  }
+type actionConstructor = Js.Json.t => action;
+
+type jsonCodec('d) = {
+  encoder: 'd => Js.Json.t,
+  decoder: Js.Json.t => 'd
+};
+
+type endpoint = {
+  path: string,
+  method: httpMethod,
+  effectHandler,
 };
 
 let applyFetchAbility = stateEffect => {
@@ -183,13 +223,7 @@ let applyFetchAbility = stateEffect => {
 };
 
 type endpointType =
-  | RouteAlertCreate;
-
-type endpoint = {
-  path: string,
-  method: httpMethod,
-  effectHandler,
-};
+  | RouteAlertCreate; // codec: routeAlertEncoder/Decoder, googleDirectionsDecoder
 
 let endpointFor = endpointType =>
   switch (endpointType) {
@@ -215,21 +249,36 @@ let endpointRegistry =
   );
 
 module Api = {
-  let routeAlertCreate = (origin, destination, minutes, afterActionCtor) => {
-    let request = {
-      method: Post,
-      path: "/route_alerts",
-      body:
-        Some(
-          routeAlertEncoder({origin, destination, durationMinutes: minutes}),
-        ),
+  let routeAlertCreate = (origin, destination, minutes, afterActionCtor) => {    
+    let routeAlert = {origin, destination, durationMinutes: minutes};
+    let endpoint = endpointFor(RouteAlertCreate);
+
+    let serverRequest = {
+      path: endpoint.path,
+      method: endpoint.method_,
+      body: Some(routeAlertEncoder(routeAlert))
     };
 
-    HttpRequest(request, googleDirectionsDecoder, afterActionCtor);
+    RIO.make(env => IO.async(onDone => {
+      env.networkBridge(serverRequest, json => {
+        let directions = googleDirectionsDecoder(json)
+        onDone(Ok(afterActionCtor(directions)));
+      });
+    }));
+  };
+
+  let stressTest = () => {
+    let serializableError = {
+      data: { message: "error" },
+      encoder: errorResponseEncoder,
+      decoder: errorResponseDecoder,
+    };
+
+    RIO.make(env => IO.pure(setOrigin("stress testing")))
   };
 };
 
-let reducer = (state: state, action) => {
+let reducer: (state, action) => (state, option(RIO.t(action))) = (state, action) => {
   // Js.log("Processing action: " ++ string_of_action(action));
   let res =
     switch (action) {
@@ -248,10 +297,9 @@ let reducer = (state: state, action) => {
         ),
       )
     | FetchedRoute(gd) => (
-        {...state, routeDuration: Some(durationFromDirections(gd))},
+        {...state, routeDuration: durationFromDirections(gd)},
         None,
       )
-    | Noop => (state, None)
     };
 
   applyFetchAbility(res);

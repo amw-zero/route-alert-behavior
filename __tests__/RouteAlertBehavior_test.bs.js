@@ -90,16 +90,16 @@ function clientNetworkBridge(request, respond) {
   }
 }
 
-function testInterpreter(param, param$1) {
-  return RouteAlertBehavior.behaviorInterpreter(clientNetworkBridge, param, param$1);
-}
+var testEnv = {
+  networkBridge: clientNetworkBridge
+};
 
 function reduceActions(actions) {
   var state = {
     contents: RouteAlertBehavior.initialState
   };
   return Belt_List.reduce(actions, RouteAlertBehavior.initialState, (function (param, action) {
-                RouteAlertBehavior.Reffect.makeDispatch(state.contents, RouteAlertBehavior.reducer, testInterpreter, (function (s) {
+                RouteAlertBehavior.Reffect.makeDispatch(state.contents, RouteAlertBehavior.reducer, testEnv, (function (s) {
                           state.contents = s;
                           return /* () */0;
                         }))(action);
@@ -165,7 +165,7 @@ exports.googleRouteEncoder = googleRouteEncoder;
 exports.googleDirectionsEncoder = googleDirectionsEncoder;
 exports.serverNetworkBridge = serverNetworkBridge;
 exports.clientNetworkBridge = clientNetworkBridge;
-exports.testInterpreter = testInterpreter;
+exports.testEnv = testEnv;
 exports.reduceActions = reduceActions;
 exports.canFetch = canFetch;
 /*  Not a pure module */

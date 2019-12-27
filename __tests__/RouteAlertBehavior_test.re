@@ -49,7 +49,10 @@ let clientNetworkBridge = (request: serverRequest, respond) => {
   };
 };
 
-let testInterpreter = behaviorInterpreter(clientNetworkBridge);
+
+let testEnv = {
+  networkBridge: clientNetworkBridge,
+};
 
 let reduceActions = actions => {
   let state = ref(initialState);
@@ -61,7 +64,7 @@ let reduceActions = actions => {
       Reffect.makeDispatch(
         state^,
         reducer,
-        testInterpreter,
+        testEnv,
         s => state := s,
         action,
       );
