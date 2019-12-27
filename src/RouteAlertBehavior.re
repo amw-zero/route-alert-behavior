@@ -1,10 +1,6 @@
 open Belt.Option;
 open Relude.Globals;
 
-[@bs.deriving accessors]
-type thing = 
-  | Constructor(string, int);
-
 type httpMethod =
   | Get
   | Post;
@@ -146,8 +142,6 @@ let googleRouteDecoder = json =>
 
 let googleDirectionsDecoder = json =>
   Json.Decode.{routes: json |> field("routes", list(googleRouteDecoder))};
-
-
 
 type networkBridgeFunc = (serverRequest, onCompleteFunc) => unit;
 type effectHandler = (Js.Json.t, networkBridgeFunc, onCompleteFunc) => unit;

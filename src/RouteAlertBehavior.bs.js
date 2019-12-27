@@ -16,13 +16,6 @@ var Json_encode = require("@glennsl/bs-json/src/Json_encode.bs.js");
 var Relude_List = require("relude/src/Relude_List.bs.js");
 var Relude_Option = require("relude/src/Relude_Option.bs.js");
 
-function constructor(param_0, param_1) {
-  return /* Constructor */[
-          param_0,
-          param_1
-        ];
-}
-
 var partial_arg = { };
 
 var partial_arg$1 = Relude_RIO.WithErrorAndEnv;
@@ -363,7 +356,6 @@ var initialState = {
   routeDuration: undefined
 };
 
-exports.constructor = constructor;
 exports.RIO = RIO;
 exports.$less$$great = $less$$great;
 exports.$less$hash$great = $less$hash$great;
