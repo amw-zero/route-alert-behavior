@@ -259,12 +259,11 @@ module Api = {
       body: Some(routeAlertEncoder(routeAlert))
     };
 
-    RIO.make(env => IO.async(onDone => {
-      env.networkBridge(serverRequest, json => {
-        let directions = googleDirectionsDecoder(json)
-        onDone(Ok(afterActionCtor(directions)));
-      });
-    }));
+    RIO.make(env => 
+      IO.async(onDone => 
+        env.networkBridge(serverRequest, json => onDone(Ok(json))))
+      |> IO.map(a => googleDirectionsDecoder(a) |> afterActionCtor)
+    );
   };
 
   let stressTest = () => {

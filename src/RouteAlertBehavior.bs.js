@@ -248,12 +248,13 @@ function routeAlertCreate(origin, destination, minutes, afterActionCtor) {
     body: serverRequest_body
   };
   return Curry._1(RIO.make, (function (env) {
-                return Relude_IO.async((function (onDone) {
-                              return Curry._2(env.networkBridge, serverRequest, (function (json) {
-                                            var directions = googleDirectionsDecoder(json);
-                                            return Curry._1(onDone, /* Ok */Block.__(0, [Curry._1(afterActionCtor, directions)]));
-                                          }));
-                            }));
+                return Relude_IO.map((function (a) {
+                              return Curry._1(afterActionCtor, googleDirectionsDecoder(a));
+                            }), Relude_IO.async((function (onDone) {
+                                  return Curry._2(env.networkBridge, serverRequest, (function (json) {
+                                                return Curry._1(onDone, /* Ok */Block.__(0, [json]));
+                                              }));
+                                })));
               }));
 }
 
