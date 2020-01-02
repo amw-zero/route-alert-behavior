@@ -197,9 +197,51 @@ function applyFetchAbility(stateEffect) {
             minutes: state.minutes,
             routeFetchAbility: routeFetchAbility,
             dataLoadingState: state.dataLoadingState,
-            routeDuration: state.routeDuration
+            routeDuration: state.routeDuration,
+            routeLinkGoogle: state.routeLinkGoogle
           },
           stateEffect[1]
+        ];
+}
+
+function applyGoogleLink(param) {
+  var effect = param[1];
+  var state = param[0];
+  var googleStop = function (stop) {
+    var str = String(stop);
+    if (str.includes(" ")) {
+      return str.replace(" ", "+");
+    } else {
+      return str;
+    }
+  };
+  var match = state.origin;
+  var match$1 = state.destination;
+  if (match !== undefined && match$1 !== undefined) {
+    return /* tuple */[
+            {
+              origin: state.origin,
+              destination: state.destination,
+              minutes: state.minutes,
+              routeFetchAbility: state.routeFetchAbility,
+              dataLoadingState: state.dataLoadingState,
+              routeDuration: state.routeDuration,
+              routeLinkGoogle: "https://google.com/maps/dir/" + (googleStop(match) + ("/" + googleStop(match$1)))
+            },
+            effect
+          ];
+  }
+  return /* tuple */[
+          {
+            origin: state.origin,
+            destination: state.destination,
+            minutes: state.minutes,
+            routeFetchAbility: state.routeFetchAbility,
+            dataLoadingState: state.dataLoadingState,
+            routeDuration: state.routeDuration,
+            routeLinkGoogle: undefined
+          },
+          effect
         ];
 }
 
@@ -272,7 +314,8 @@ function reducer(state, action) {
         minutes: state.minutes,
         routeFetchAbility: state.routeFetchAbility,
         dataLoadingState: /* Loading */0,
-        routeDuration: state.routeDuration
+        routeDuration: state.routeDuration,
+        routeLinkGoogle: state.routeLinkGoogle
       },
       routeAlertCreate(Belt_Option.getExn(state.origin), Belt_Option.getExn(state.destination), Belt_Option.getExn(state.minutes), fetchedRoute)
     ];
@@ -286,7 +329,8 @@ function reducer(state, action) {
               minutes: state.minutes,
               routeFetchAbility: state.routeFetchAbility,
               dataLoadingState: state.dataLoadingState,
-              routeDuration: state.routeDuration
+              routeDuration: state.routeDuration,
+              routeLinkGoogle: state.routeLinkGoogle
             },
             undefined
           ];
@@ -299,7 +343,8 @@ function reducer(state, action) {
               minutes: state.minutes,
               routeFetchAbility: state.routeFetchAbility,
               dataLoadingState: state.dataLoadingState,
-              routeDuration: state.routeDuration
+              routeDuration: state.routeDuration,
+              routeLinkGoogle: state.routeLinkGoogle
             },
             undefined
           ];
@@ -312,7 +357,8 @@ function reducer(state, action) {
               minutes: action[0],
               routeFetchAbility: state.routeFetchAbility,
               dataLoadingState: state.dataLoadingState,
-              routeDuration: state.routeDuration
+              routeDuration: state.routeDuration,
+              routeLinkGoogle: state.routeLinkGoogle
             },
             undefined
           ];
@@ -325,7 +371,8 @@ function reducer(state, action) {
               minutes: state.minutes,
               routeFetchAbility: state.routeFetchAbility,
               dataLoadingState: state.dataLoadingState,
-              routeDuration: durationFromDirections(action[0])
+              routeDuration: durationFromDirections(action[0]),
+              routeLinkGoogle: state.routeLinkGoogle
             },
             undefined
           ];
@@ -333,7 +380,7 @@ function reducer(state, action) {
       
     }
   }
-  return applyFetchAbility(tmp);
+  return applyGoogleLink(applyFetchAbility(tmp));
 }
 
 function canFetch(state) {
@@ -353,7 +400,8 @@ var initialState = {
   minutes: undefined,
   routeFetchAbility: /* CannotFetch */1,
   dataLoadingState: /* NotLoading */1,
-  routeDuration: undefined
+  routeDuration: undefined,
+  routeLinkGoogle: undefined
 };
 
 exports.RIO = RIO;
@@ -379,6 +427,7 @@ exports.fetchRoute = fetchRoute;
 exports.fetchedRoute = fetchedRoute;
 exports.string_of_action = string_of_action;
 exports.applyFetchAbility = applyFetchAbility;
+exports.applyGoogleLink = applyGoogleLink;
 exports.endpointFor = endpointFor;
 exports.EndpointComparable = EndpointComparable;
 exports.endpointRegistry = endpointRegistry;

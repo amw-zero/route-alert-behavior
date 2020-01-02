@@ -117,4 +117,24 @@ describe("Route Alert Behavior", () => {
 
     expect(passed) |> toBe(true);
   });
+
+  test("creating link to route in Google maps when there are no spaces in the stops", () => {
+    let finalState =
+      reduceActions([
+        SetOrigin("origin"),
+        SetDestination("dest"),
+      ]);
+
+    expect(finalState.routeLinkGoogle) |> toBe(Some("https://google.com/maps/dir/origin/dest"));
+  });
+
+  test("creating link to route in Google maps when the stops have spaces", () => {
+    let finalState = 
+      reduceActions([
+        SetOrigin("new york"),
+        SetDestination("new jersey"),
+      ]);
+
+    expect(finalState.routeLinkGoogle) |> toBe(Some("https://google.com/maps/dir/new+york/new+jersey"));      
+  });
 });

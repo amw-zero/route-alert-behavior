@@ -164,6 +164,7 @@ type state = {
   routeFetchAbility,
   dataLoadingState,
   routeDuration: option(int),
+  routeLinkGoogle: option(string),
 };
 
 [@bs.deriving accessors]
@@ -214,6 +215,22 @@ let applyFetchAbility = stateEffect => {
     };
 
   ({...state, routeFetchAbility}, snd(stateEffect));
+};
+
+let applyGoogleLink = ((state, effect)) => {
+  let googleStop = stop => {
+    let str = Js.String.make(stop);
+    if (Js.String.includes(" ", str)) {
+      Js.String.replace(" ", "+", str)
+    } else {
+      str
+    };
+  };
+
+  switch ((state.origin, state.destination)) {
+  | (Some(o), Some(d)) => ({...state, routeLinkGoogle: Some("https://google.com/maps/dir/" ++ googleStop(o) ++ "/" ++ googleStop(d))}, effect)
+  | _ => ({...state, routeLinkGoogle: None}, effect);
+  };
 };
 
 type endpointType =
@@ -273,29 +290,28 @@ module Api = {
 
 let reducer: (state, action) => (state, option(RIO.t(action))) = (state, action) => {
   // Js.log("Processing action: " ++ string_of_action(action));
-  let res =
-    switch (action) {
-    | SetOrigin(point) => ({...state, origin: Some(point)}, None)
-    | SetDestination(dest) => ({...state, destination: Some(dest)}, None)
-    | SetMinutes(minutes) => ({...state, minutes: Some(minutes)}, None)
-    | FetchRoute => (
-        {...state, dataLoadingState: Loading},
-        Some(
-          Api.routeAlertCreate(
-            state.origin->getExn,
-            state.destination->getExn,
-            state.minutes->getExn,
-            fetchedRoute,
-          ),
+  switch (action) {
+  | SetOrigin(point) => ({...state, origin: Some(point)}, None)
+  | SetDestination(dest) => ({...state, destination: Some(dest)}, None)
+  | SetMinutes(minutes) => ({...state, minutes: Some(minutes)}, None)
+  | FetchRoute => (
+      {...state, dataLoadingState: Loading},
+      Some(
+        Api.routeAlertCreate(
+          state.origin->getExn,
+          state.destination->getExn,
+          state.minutes->getExn,
+          fetchedRoute,
         ),
-      )
-    | FetchedRoute(gd) => (
-        {...state, routeDuration: durationFromDirections(gd)},
-        None,
-      )
-    };
-
-  applyFetchAbility(res);
+      ),
+    )
+  | FetchedRoute(gd) => (
+      {...state, routeDuration: durationFromDirections(gd)},
+      None,
+    )
+  }
+  |> applyFetchAbility
+  |> applyGoogleLink
 };
 
 // View Helpers
@@ -307,6 +323,7 @@ let initialState = {
   routeFetchAbility: CannotFetch,
   dataLoadingState: NotLoading,
   routeDuration: None,
+  routeLinkGoogle: None,
 };
 
 let canFetch = state =>

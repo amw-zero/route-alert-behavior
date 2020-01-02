@@ -139,23 +139,43 @@ Jest.describe("Route Alert Behavior", (function (param) {
                     ]);
                 return Jest.Expect.toBe(true, Jest.Expect.expect(finalState.routeFetchAbility ? false : true));
               }));
-        return Jest.test("calculating route duration when calculation is successful", (function (param) {
+        Jest.test("calculating route duration when calculation is successful", (function (param) {
+                var finalState = reduceActions(/* :: */[
+                      /* SetOrigin */Block.__(0, ["origin"]),
+                      /* :: */[
+                        /* SetDestination */Block.__(1, ["dest"]),
+                        /* :: */[
+                          /* SetMinutes */Block.__(2, [5]),
+                          /* :: */[
+                            /* FetchRoute */0,
+                            /* [] */0
+                          ]
+                        ]
+                      ]
+                    ]);
+                var match = finalState.routeDuration;
+                var passed = match !== undefined ? match === 6 : false;
+                return Jest.Expect.toBe(true, Jest.Expect.expect(passed));
+              }));
+        Jest.test("creating link to route in Google maps when there are no spaces in the stops", (function (param) {
+                var finalState = reduceActions(/* :: */[
+                      /* SetOrigin */Block.__(0, ["origin"]),
+                      /* :: */[
+                        /* SetDestination */Block.__(1, ["dest"]),
+                        /* [] */0
+                      ]
+                    ]);
+                return Jest.Expect.toBe("https://google.com/maps/dir/origin/dest", Jest.Expect.expect(finalState.routeLinkGoogle));
+              }));
+        return Jest.test("creating link to route in Google maps when the stops have spaces", (function (param) {
                       var finalState = reduceActions(/* :: */[
-                            /* SetOrigin */Block.__(0, ["origin"]),
+                            /* SetOrigin */Block.__(0, ["new york"]),
                             /* :: */[
-                              /* SetDestination */Block.__(1, ["dest"]),
-                              /* :: */[
-                                /* SetMinutes */Block.__(2, [5]),
-                                /* :: */[
-                                  /* FetchRoute */0,
-                                  /* [] */0
-                                ]
-                              ]
+                              /* SetDestination */Block.__(1, ["new jersey"]),
+                              /* [] */0
                             ]
                           ]);
-                      var match = finalState.routeDuration;
-                      var passed = match !== undefined ? match === 6 : false;
-                      return Jest.Expect.toBe(true, Jest.Expect.expect(passed));
+                      return Jest.Expect.toBe("https://google.com/maps/dir/new+york/new+jersey", Jest.Expect.expect(finalState.routeLinkGoogle));
                     }));
       }));
 
