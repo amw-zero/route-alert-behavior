@@ -81,6 +81,13 @@ let canFetch = state => {
   };
 };
 
+let createRouteAlert = (~minutes=5, ~origin="origin", ~dest="dest", ()) =>
+  [
+    SetOrigin(origin),
+    SetDestination(dest),
+    SetMinutes(minutes),
+  ];
+
 describe("Route Alert Behavior", () => {
   test("preventing alert creation when all data is not present", () => {
     let finalState =
@@ -91,31 +98,23 @@ describe("Route Alert Behavior", () => {
 
   test("preventing alert creation when all data is present", () => {
     let finalState =
-      reduceActions([
-        SetOrigin("origin"),
-        SetDestination("dest"),
-        SetMinutes(5),
-      ]);
+      reduceActions(createRouteAlert());
 
     expect(canFetch(finalState.routeFetchAbility)) |> toBe(true);
   });
 
   test("calculating route duration when calculation is successful", () => {
     let finalState =
-      reduceActions([
-        SetOrigin("origin"),
-        SetDestination("dest"),
-        SetMinutes(5),
-        FetchRoute,
-      ]);
+      reduceActions(
+        List.concat([createRouteAlert(), [FetchRoute]])
+      );
 
-    let passed =
-      switch (finalState.routeDuration) {
+    let passed = 
+      fun
       | Some(6) => true
       | _ => false
-      };
 
-    expect(passed) |> toBe(true);
+    expect(passed(finalState.routeDuration)) |> toBe(true);
   });
 
   test("creating link to route in Google maps when there are no spaces in the stops", () => {

@@ -2,6 +2,7 @@
 'use strict';
 
 var Jest = require("@glennsl/bs-jest/src/jest.js");
+var List = require("bs-platform/lib/js/list.js");
 var Block = require("bs-platform/lib/js/block.js");
 var Curry = require("bs-platform/lib/js/curry.js");
 var Belt_List = require("bs-platform/lib/js/belt_List.js");
@@ -115,6 +116,22 @@ function canFetch(state) {
   }
 }
 
+function createRouteAlert($staropt$star, $staropt$star$1, $staropt$star$2, param) {
+  var minutes = $staropt$star !== undefined ? $staropt$star : 5;
+  var origin = $staropt$star$1 !== undefined ? $staropt$star$1 : "origin";
+  var dest = $staropt$star$2 !== undefined ? $staropt$star$2 : "dest";
+  return /* :: */[
+          /* SetOrigin */Block.__(0, [origin]),
+          /* :: */[
+            /* SetDestination */Block.__(1, [dest]),
+            /* :: */[
+              /* SetMinutes */Block.__(2, [minutes]),
+              /* [] */0
+            ]
+          ]
+        ];
+}
+
 Jest.describe("Route Alert Behavior", (function (param) {
         Jest.test("preventing alert creation when all data is not present", (function (param) {
                 var finalState = reduceActions(/* :: */[
@@ -127,35 +144,28 @@ Jest.describe("Route Alert Behavior", (function (param) {
                 return Jest.Expect.toBe(false, Jest.Expect.expect(finalState.routeFetchAbility ? false : true));
               }));
         Jest.test("preventing alert creation when all data is present", (function (param) {
-                var finalState = reduceActions(/* :: */[
-                      /* SetOrigin */Block.__(0, ["origin"]),
-                      /* :: */[
-                        /* SetDestination */Block.__(1, ["dest"]),
-                        /* :: */[
-                          /* SetMinutes */Block.__(2, [5]),
-                          /* [] */0
-                        ]
-                      ]
-                    ]);
+                var finalState = reduceActions(createRouteAlert(undefined, undefined, undefined, /* () */0));
                 return Jest.Expect.toBe(true, Jest.Expect.expect(finalState.routeFetchAbility ? false : true));
               }));
         Jest.test("calculating route duration when calculation is successful", (function (param) {
-                var finalState = reduceActions(/* :: */[
-                      /* SetOrigin */Block.__(0, ["origin"]),
-                      /* :: */[
-                        /* SetDestination */Block.__(1, ["dest"]),
-                        /* :: */[
-                          /* SetMinutes */Block.__(2, [5]),
+                var finalState = reduceActions(List.concat(/* :: */[
+                          createRouteAlert(undefined, undefined, undefined, /* () */0),
                           /* :: */[
-                            /* FetchRoute */0,
+                            /* :: */[
+                              /* FetchRoute */0,
+                              /* [] */0
+                            ],
                             /* [] */0
                           ]
-                        ]
-                      ]
-                    ]);
-                var match = finalState.routeDuration;
-                var passed = match !== undefined ? match === 6 : false;
-                return Jest.Expect.toBe(true, Jest.Expect.expect(passed));
+                        ]));
+                var passed = function (param) {
+                  if (param !== undefined) {
+                    return param === 6;
+                  } else {
+                    return false;
+                  }
+                };
+                return Jest.Expect.toBe(true, Jest.Expect.expect(passed(finalState.routeDuration)));
               }));
         Jest.test("creating link to route in Google maps when there are no spaces in the stops", (function (param) {
                 var finalState = reduceActions(/* :: */[
@@ -188,4 +198,5 @@ exports.clientNetworkBridge = clientNetworkBridge;
 exports.testEnv = testEnv;
 exports.reduceActions = reduceActions;
 exports.canFetch = canFetch;
+exports.createRouteAlert = createRouteAlert;
 /*  Not a pure module */
