@@ -134,21 +134,21 @@ function createRouteAlert($staropt$star, $staropt$star$1, $staropt$star$2, param
 
 Jest.describe("Route Alert Behavior", (function (param) {
         Jest.test("preventing alert creation when all data is not present", (function (param) {
-                var finalState = reduceActions(/* :: */[
+                var state = reduceActions(/* :: */[
                       /* SetOrigin */Block.__(0, ["origin"]),
                       /* :: */[
                         /* SetDestination */Block.__(1, ["dest"]),
                         /* [] */0
                       ]
                     ]);
-                return Jest.Expect.toBe(false, Jest.Expect.expect(finalState.routeFetchAbility ? false : true));
+                return Jest.Expect.toBe(false, Jest.Expect.expect(state.routeFetchAbility ? false : true));
               }));
         Jest.test("preventing alert creation when all data is present", (function (param) {
-                var finalState = reduceActions(createRouteAlert(undefined, undefined, undefined, /* () */0));
-                return Jest.Expect.toBe(true, Jest.Expect.expect(finalState.routeFetchAbility ? false : true));
+                var state = reduceActions(createRouteAlert(undefined, undefined, undefined, /* () */0));
+                return Jest.Expect.toBe(true, Jest.Expect.expect(state.routeFetchAbility ? false : true));
               }));
         Jest.test("calculating route duration when calculation is successful", (function (param) {
-                var finalState = reduceActions(List.concat(/* :: */[
+                var state = reduceActions(List.concat(/* :: */[
                           createRouteAlert(undefined, undefined, undefined, /* () */0),
                           /* :: */[
                             /* :: */[
@@ -165,27 +165,27 @@ Jest.describe("Route Alert Behavior", (function (param) {
                     return false;
                   }
                 };
-                return Jest.Expect.toBe(true, Jest.Expect.expect(passed(finalState.routeDuration)));
+                return Jest.Expect.toBe(true, Jest.Expect.expect(passed(state.routeDuration)));
               }));
         Jest.test("creating link to route in Google maps when there are no spaces in the stops", (function (param) {
-                var finalState = reduceActions(/* :: */[
+                var state = reduceActions(/* :: */[
                       /* SetOrigin */Block.__(0, ["origin"]),
                       /* :: */[
                         /* SetDestination */Block.__(1, ["dest"]),
                         /* [] */0
                       ]
                     ]);
-                return Jest.Expect.toBe("https://google.com/maps/dir/origin/dest", Jest.Expect.expect(finalState.routeLinkGoogle));
+                return Jest.Expect.toBe("https://google.com/maps/dir/origin/dest", Jest.Expect.expect(state.routeLinkGoogle));
               }));
         return Jest.test("creating link to route in Google maps when the stops have spaces", (function (param) {
-                      var finalState = reduceActions(/* :: */[
+                      var state = reduceActions(/* :: */[
                             /* SetOrigin */Block.__(0, ["new york"]),
                             /* :: */[
                               /* SetDestination */Block.__(1, ["new jersey"]),
                               /* [] */0
                             ]
                           ]);
-                      return Jest.Expect.toBe("https://google.com/maps/dir/new+york/new+jersey", Jest.Expect.expect(finalState.routeLinkGoogle));
+                      return Jest.Expect.toBe("https://google.com/maps/dir/new+york/new+jersey", Jest.Expect.expect(state.routeLinkGoogle));
                     }));
       }));
 

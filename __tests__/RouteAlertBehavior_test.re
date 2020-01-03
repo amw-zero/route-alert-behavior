@@ -85,20 +85,20 @@ let createRouteAlert = (~minutes=5, ~origin="origin", ~dest="dest", ()) => [
 
 describe("Route Alert Behavior", () => {
   test("preventing alert creation when all data is not present", () => {
-    let finalState =
+    let state =
       reduceActions([SetOrigin("origin"), SetDestination("dest")]);
 
-    expect(canFetch(finalState.routeFetchAbility)) |> toBe(false);
+    expect(canFetch(state.routeFetchAbility)) |> toBe(false);
   });
 
   test("preventing alert creation when all data is present", () => {
-    let finalState = reduceActions(createRouteAlert());
+    let state = reduceActions(createRouteAlert());
 
-    expect(canFetch(finalState.routeFetchAbility)) |> toBe(true);
+    expect(canFetch(state.routeFetchAbility)) |> toBe(true);
   });
 
   test("calculating route duration when calculation is successful", () => {
-    let finalState =
+    let state =
       reduceActions(List.concat([createRouteAlert(), [FetchRoute]]));
 
     let passed =
@@ -106,24 +106,24 @@ describe("Route Alert Behavior", () => {
       | Some(6) => true
       | _ => false;
 
-    expect(passed(finalState.routeDuration)) |> toBe(true);
+    expect(passed(state.routeDuration)) |> toBe(true);
   });
 
   test(
     "creating link to route in Google maps when there are no spaces in the stops",
     () => {
-    let finalState =
+    let state =
       reduceActions([SetOrigin("origin"), SetDestination("dest")]);
 
-    expect(finalState.routeLinkGoogle)
+    expect(state.routeLinkGoogle)
     |> toBe(Some("https://google.com/maps/dir/origin/dest"));
   });
 
   test("creating link to route in Google maps when the stops have spaces", () => {
-    let finalState =
+    let state =
       reduceActions([SetOrigin("new york"), SetDestination("new jersey")]);
 
-    expect(finalState.routeLinkGoogle)
+    expect(state.routeLinkGoogle)
     |> toBe(Some("https://google.com/maps/dir/new+york/new+jersey"));
   });
 });
