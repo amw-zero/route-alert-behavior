@@ -99,7 +99,7 @@ describe("Route Alert Behavior", () => {
 
   test("calculating route duration when calculation is successful", () => {
     let state =
-      reduceActions(List.concat([createRouteAlert(), [FetchRoute]]));
+      [createRouteAlert(), [FetchRoute]] |> List.flatten |> reduceActions;
 
     let passed =
       fun

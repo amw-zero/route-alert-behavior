@@ -148,7 +148,7 @@ Jest.describe("Route Alert Behavior", (function (param) {
                 return Jest.Expect.toBe(true, Jest.Expect.expect(state.routeFetchAbility ? false : true));
               }));
         Jest.test("calculating route duration when calculation is successful", (function (param) {
-                var state = reduceActions(List.concat(/* :: */[
+                var state = reduceActions(List.flatten(/* :: */[
                           createRouteAlert(undefined, undefined, undefined, /* () */0),
                           /* :: */[
                             /* :: */[
