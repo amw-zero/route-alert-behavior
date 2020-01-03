@@ -8,7 +8,9 @@ let googleDurationEncoder = googleDuration =>
 
 let googleLegEncoder = googleLeg =>
   Json.Encode.(
-    object_([("duration_in_traffic", googleLeg.duration |> googleDurationEncoder)])
+    object_([
+      ("duration_in_traffic", googleLeg.duration |> googleDurationEncoder),
+    ])
   );
 
 let googleRouteEncoder = googleRoute =>
@@ -42,17 +44,17 @@ let clientNetworkBridge = (request: serverRequest, respond) => {
   | "/route_alerts" =>
     switch (request.body) {
     | Some(json) =>
-        createRouteAlertEffectHandler(json, serverNetworkBridge, googleDirections => respond(googleDirections)) 
+      createRouteAlertEffectHandler(
+        json, serverNetworkBridge, googleDirections =>
+        respond(googleDirections)
+      )
     | None => errorResponseEncoder({message: "bad body"})->respond
-    };
+    }
   | _ => errorResponseEncoder({message: "bad route"})->respond
   };
 };
 
-
-let testEnv = {
-  networkBridge: clientNetworkBridge,
-};
+let testEnv = {networkBridge: clientNetworkBridge};
 
 let reduceActions = actions => {
   let state = ref(initialState);
@@ -61,13 +63,7 @@ let reduceActions = actions => {
     actions,
     initialState,
     (_, action) => {
-      Reffect.makeDispatch(
-        state^,
-        reducer,
-        testEnv,
-        s => state := s,
-        action,
-      );
+      Reffect.makeDispatch(state^, reducer, testEnv, s => state := s, action);
 
       state^;
     },
@@ -81,12 +77,11 @@ let canFetch = state => {
   };
 };
 
-let createRouteAlert = (~minutes=5, ~origin="origin", ~dest="dest", ()) =>
-  [
-    SetOrigin(origin),
-    SetDestination(dest),
-    SetMinutes(minutes),
-  ];
+let createRouteAlert = (~minutes=5, ~origin="origin", ~dest="dest", ()) => [
+  SetOrigin(origin),
+  SetDestination(dest),
+  SetMinutes(minutes),
+];
 
 describe("Route Alert Behavior", () => {
   test("preventing alert creation when all data is not present", () => {
@@ -97,43 +92,38 @@ describe("Route Alert Behavior", () => {
   });
 
   test("preventing alert creation when all data is present", () => {
-    let finalState =
-      reduceActions(createRouteAlert());
+    let finalState = reduceActions(createRouteAlert());
 
     expect(canFetch(finalState.routeFetchAbility)) |> toBe(true);
   });
 
   test("calculating route duration when calculation is successful", () => {
     let finalState =
-      reduceActions(
-        List.concat([createRouteAlert(), [FetchRoute]])
-      );
+      reduceActions(List.concat([createRouteAlert(), [FetchRoute]]));
 
-    let passed = 
+    let passed =
       fun
       | Some(6) => true
-      | _ => false
+      | _ => false;
 
     expect(passed(finalState.routeDuration)) |> toBe(true);
   });
 
-  test("creating link to route in Google maps when there are no spaces in the stops", () => {
+  test(
+    "creating link to route in Google maps when there are no spaces in the stops",
+    () => {
     let finalState =
-      reduceActions([
-        SetOrigin("origin"),
-        SetDestination("dest"),
-      ]);
+      reduceActions([SetOrigin("origin"), SetDestination("dest")]);
 
-    expect(finalState.routeLinkGoogle) |> toBe(Some("https://google.com/maps/dir/origin/dest"));
+    expect(finalState.routeLinkGoogle)
+    |> toBe(Some("https://google.com/maps/dir/origin/dest"));
   });
 
   test("creating link to route in Google maps when the stops have spaces", () => {
-    let finalState = 
-      reduceActions([
-        SetOrigin("new york"),
-        SetDestination("new jersey"),
-      ]);
+    let finalState =
+      reduceActions([SetOrigin("new york"), SetDestination("new jersey")]);
 
-    expect(finalState.routeLinkGoogle) |> toBe(Some("https://google.com/maps/dir/new+york/new+jersey"));      
+    expect(finalState.routeLinkGoogle)
+    |> toBe(Some("https://google.com/maps/dir/new+york/new+jersey"));
   });
 });
